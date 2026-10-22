@@ -12,6 +12,7 @@ function base64url(bytes){
   return btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
 function utf8base64(text){return base64url(new TextEncoder().encode(text));}
+function mimeBase64(text){const raw=utf8base64(text).replace(/-/g,"+").replace(/_/g,"/");const padded=raw+"=".repeat((4-raw.length%4)%4);return padded.match(/.{1,76}/g)?.join("\r\n")||"";}
 function header(s){return String(s||"").replace(/[\r\n\0]+/g," ").trim();}
 function addresses(text){
   return String(text||"").split(",").map(s=>s.trim()).filter(Boolean).map(s=>{
@@ -24,9 +25,9 @@ function gmailRaw(to,cc,subject,body){
   if(!toList.length)throw Error("Enter a recipient before sending");
   const ccs=addresses(cc);
   const lines=["MIME-Version: 1.0","To: "+toList.join(", "),...(ccs.length?["Cc: "+ccs.join(", ")]:[]),
-    "Subject: =?UTF-8?B?"+utf8base64(header(subject)).replace(/-/g,"+").replace(/_/g,"/")+"?=",
+    "Subject: =?UTF-8?B?"+mimeBase64(header(subject)).replace(/\r\n/g,"")+"?=",
     "Content-Type: text/plain; charset=UTF-8","Content-Transfer-Encoding: base64","",
-    utf8base64(body).replace(/-/g,"+").replace(/_/g,"/"),""];
+    mimeBase64(body),""];
   return utf8base64(lines.join("\r\n"));
 }
 function loadGoogleScript(){
