@@ -6,7 +6,7 @@ import json
 import tempfile
 import zipfile
 from xml.etree import ElementTree as ET
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 ROOT=Path(__file__).resolve().parents[1]
 PAGE=(ROOT/"index.html").as_uri()
@@ -83,11 +83,11 @@ def test_browser():
             a.fill("12")
             b.fill("=A6*2+3")
             result=page.locator('[data-result="5:1"]')
-            assert result.inner_text()=="27"
+            expect(result).to_have_text("27")
             a.fill("10")
-            assert result.inner_text()=="23"
+            expect(result).to_have_text("23")
             calc=page.locator('[data-result="3:3"]')
-            assert calc.inner_text()=="295"
+            expect(calc).to_have_text("295")
             xlsx=downloaded(page,"Save XLSX",p/"sheet.xlsx")
             content=validate_office(xlsx,["xl/worksheets/sheet1.xml","xl/workbook.xml"])
             assert "<f>A6*2+3</f>" in content["xl/worksheets/sheet1.xml"]
@@ -95,7 +95,7 @@ def test_browser():
             csv=downloaded(page,"Save CSV",p/"sheet.csv")
             assert "=A6*2+3" in csv.read_text()
             b.fill("=B6")
-            assert "#CYCLE!" in result.inner_text()
+            expect(result).to_have_text("#CYCLE!")
             # clear cycle before leaving
             b.fill("=A6+5")
             page.locator('[data-tool="home"]').click()
