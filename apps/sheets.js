@@ -160,12 +160,19 @@ EZOffice.register("sheets",function(ctx){
     const data=JSON.parse(await file.text());if(data.format!=="EZSheet-1")throw Error("Unsupported workbook format");
     if(ctx.isActive())setRows(data.rows,file.name);
   }));
+  button(bar,"Save XLSX",()=>{
+    const filenameX=(filename.value.replace(/.(csv|json|ezsheet|xlsx)$/i,"")||"Workbook")+".xlsx";
+    const blob=EZOfficeExport.xlsx(values(),(r,c)=>calculate(rows,r,c));
+    download(filenameX,blob,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    markDirty(false);
+  },true);
+  button(bar,"Print / PDF",()=>window.print());
   button(bar,"Save CSV",()=>{download((filename.value||"Sheet.csv").replace(/\.(ezsheet|json)$/i,".csv"),csvText(values()),"text/csv;charset=utf-8");markDirty(false);},true);
   button(bar,"Save workbook",()=>{download("Workbook.ezsheet",JSON.stringify({format:"EZSheet-1",rows:values()}),"application/json");markDirty(false);});
   button(bar,"Add row",()=>{if(rows.length>=MAX_ROWS){message("Row limit reached");return;}rows.push(Array(cols).fill(""));page=Math.floor((rows.length-1)/PAGE_SIZE);markDirty(true);render();});
   button(bar,"Add column",()=>{if(cols>=MAX_COLS){message("Column limit reached");return;}cols++;rows.forEach(r=>r.push(""));markDirty(true);render();});
   onDispose(()=>{if(frame)cancelAnimationFrame(frame);rows.length=0;});
   render();
-  info("Functional formulas: =A1*B1, =SUM(A1:A9), AVERAGE, MIN, MAX, COUNT, IF, arithmetic, powers and references. Circular references and division by zero report errors. CSV preserves formula text; .ezsheet preserves editable formulas. No XLSX support.");
+  info("Export real .xlsx for Excel/LibreOffice, CSV, .ezsheet with formulas, or Print / Save PDF. Functional formulas: =A1*B1, =SUM(A1:A9), AVERAGE, MIN, MAX, COUNT, IF, arithmetic, powers and references. Circular references and division by zero report errors. CSV preserves formula text; .ezsheet preserves editable formulas. XLSX import remains unsupported.");
 });
 })();
