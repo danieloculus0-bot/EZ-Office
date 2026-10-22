@@ -2,6 +2,14 @@
 
 **An offline, lightweight HTML productivity suite** for local files. Designed to eventually run inside [venvWin Portable](https://github.com/danieloculus0-bot/venvWin) using a shared browser engine. No Electron, React, accounts, telemetry or network service required.
 
+## Try the live Workshop demo
+
+**[Launch EZ-Office in BEAN Workshop](https://danieloculus0-bot.github.io/BEAN/portfolio/ez-office/)** · [Workshop project directory](https://danieloculus0-bot.github.io/BEAN/portfolio/)
+
+The Workshop hosts the **working HTML/CSS/JavaScript suite**, not a mockup. Writer, CSV Sheets, Slides, Media, and Mail drafts run locally in your browser. No login or server-side upload is part of the app. Save a copy before switching tools or leaving the page. Avoid confidential files on shared devices.
+
+The Workshop copy is currently published from a known version of EZ-Office. Source updates to this repository are **not automatically synchronized** to the Workshop; version upgrades require copying and testing the changed assets in BEAN.
+
 ## Start
 Open `index.html` in a modern browser. All tool scripts, styles and icons ship locally. The workspace uses one window and loads tools only when selected, with no installation step or dependency download.
 
