@@ -37,7 +37,7 @@ EZOffice.register("writer",function(ctx){
   const stats=elem("small",{},bar);
   const tools=toolbar();
   const editor=elem("div",{className:"rich-editor",contenteditable:"true",role:"textbox","aria-label":"Rich document editor","aria-multiline":"true",spellcheck:"true"},root);
-  editor.innerHTML="<h1>Untitled document</h1><p>Click here to start writing. Highlight text to format it.</p>";
+  editor.innerHTML="<p>Start writing. Highlight text to format it, or choose a heading style.</p>";
   function mark(v){dirty=v;markDirty(v);}
   function tally(){const t=editor.innerText.trim();stats.textContent=(t?t.split(/\s+/u).length:0)+" words · "+t.length+" characters";}
   function command(cmd,arg){
