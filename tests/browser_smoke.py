@@ -53,8 +53,8 @@ def test_offline_suite() -> None:
 
             # CSV: quoted fields, embedded commas and newlines, export.
             page.locator('[data-tool="sheets"]').click()
-            page.get_by_role("textbox", name="A1").fill('quoted, "value"')
-            page.get_by_role("textbox", name="B1").fill("00123")
+            page.get_by_role("textbox", name="A1", exact=True).fill('quoted, "value"')
+            page.get_by_role("textbox", name="B1", exact=True).fill("00123")
             with page.expect_download() as dl:
                 page.get_by_role("button", name="Save CSV").click()
             out = tempdir / "table.csv"
@@ -64,8 +64,8 @@ def test_offline_suite() -> None:
             with page.expect_file_chooser() as chooser:
                 page.get_by_role("button", name="Open CSV").click()
             chooser.value.set_files(str(out))
-            assert page.get_by_role("textbox", name="A1").input_value() == 'quoted, "value"'
-            assert page.get_by_role("textbox", name="B1").input_value() == "00123"
+            assert page.get_by_role("textbox", name="A1", exact=True).input_value() == 'quoted, "value"'
+            assert page.get_by_role("textbox", name="B1", exact=True).input_value() == "00123"
             page.locator('[data-tool="home"]').click()
             assert page.locator(".sheet").count() == 0
 
