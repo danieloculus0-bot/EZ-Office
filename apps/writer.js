@@ -41,6 +41,20 @@ EZOffice.register("writer",function(ctx){
   function mark(v){dirty=v;markDirty(v);}
   function tally(){const t=editor.innerText.trim();stats.textContent=(t?t.split(/\s+/u).length:0)+" words · "+t.length+" characters";}
   function command(cmd,arg){
+    const formats={bold:"strong",italic:"em",underline:"u",strikeThrough:"s"};
+    const selection=window.getSelection();
+    const activeRange=selection&&selection.rangeCount?selection.getRangeAt(0).cloneRange():null;
+    if(formats[cmd]&&activeRange&&!activeRange.collapsed&&
+       editor.contains(activeRange.commonAncestorContainer)){
+      // Explicitly wrap selected text instead of relying on inconsistent
+      // document.execCommand HTML output across Chromium / WebKit versions.
+      const wrap=document.createElement(formats[cmd]);
+      try{activeRange.surroundContents(wrap);}
+      catch(e){const selected=activeRange.extractContents();wrap.appendChild(selected);activeRange.insertNode(wrap);}
+      selection.removeAllRanges();const range=document.createRange();
+      range.selectNodeContents(wrap);selection.addRange(range);
+      editor.focus();mark(true);tally();return;
+    }
     editor.focus();
     document.execCommand(cmd,false,arg||null);
     mark(true);tally();
