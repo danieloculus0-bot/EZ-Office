@@ -1,14 +1,43 @@
 # EZ-Office
 
-Lightweight, offline-first desktop productivity tools written in plain HTML, CSS, and JavaScript. Intended for local use and eventual integration with **venvWin Portable**, not Axiom.
+**An offline, lightweight HTML productivity suite** for local files. Designed to eventually run inside [venvWin Portable](https://github.com/danieloculus0-bot/venvWin) using a shared browser engine. No Electron, React, accounts, telemetry or network service required.
 
-## Direction
-- **One window, one shared web engine.** Open one tool at a time; unload document state, DOM, and object URLs when switching.
-- **No Electron, React, npm runtime, external fonts, accounts, analytics, or always-on application server.**
-- **Files belong to the user.** Open local documents and export local files; do not transmit their contents to a service.
-- **Keep native Linux fallbacks until real document-compatibility, performance, and RAM benchmarks justify replacing them.**
-- **Never claim DOCX, XLSX, PPTX, IMAP, SMTP, or full office compatibility without implementing and testing it.**
+## Start
+Open `index.html` in a modern browser. All tool scripts, styles and icons ship locally. The workspace uses one window and loads tools only when selected, with no installation step or dependency download.
 
-The first version will contain real, intentionally limited tools: text editor, CSV spreadsheet, plain-text slide presenter, local media viewer, and email draft composer. Email delivery and inbox sync need a backend and are not part of the offline MVP.
+## Implemented tools
 
-See `docs/architecture.md` after bootstrap for memory design and verified functionality.
+| Tool | Real working features | Honest boundaries |
+| --- | --- | --- |
+| Writer | Open and edit TXT/MD, word count, keyboard save and local file download | Plain text, not DOCX or rich text |
+| Sheets | CSV import/export with proper quoted-field handling, editable cells, paged grid, add rows/columns | No XLSX or formulas |
+| Slides | Edit text slides, previous/next, fullscreen, export editable deck | No PPTX |
+| Media | Local video/audio playback and image display, release resources on switch | Browser-supported codecs only |
+| Mail drafts | Compose to/cc/subject/body, export .eml, open system mail application | No inbox, IMAP/SMTP connection or sending |
+
+**No fake backend:** every listed operation is implemented. Unimplemented compatibility and synchronization are explicitly excluded.
+
+## Design
+- One HTML shell, one active app at a time; lazy scripts and explicit cleanup of active document state
+- Local file picker and downloads, no document uploads and no always-on background polling
+- CSV grid renders a maximum of 45 rows at once and caps file/table sizes
+- Local media uses blob URLs revoked at closure to avoid retaining full video data in JS
+- Browser engine RAM remains significant and must be measured on actual venvWin hardware; tiny KB source size alone does not prove low RAM
+- **Native venvWin office apps stay in place** until compatibility and memory benchmarks justify replacement
+
+[Engineering design, RAM considerations, and verification](docs/architecture.md)
+
+## Validation
+GitHub Actions executes JavaScript syntax checks and a **real offline browser smoke test** covering every tool, file round-trips, and local URL disposal. Locally, use:
+
+```sh
+for file in shell.js apps/*.js; do node --check "$file"; done
+python -m pip install playwright
+python -m playwright install chromium
+python tests/browser_smoke.py
+```
+
+The Playwright dependency is for development tests only, **not** required to use EZ-Office. This test proves Chromium behavior with a local file, not Epiphany-on-vEnvWin memory or hardware boot.
+
+## Project scope
+EZ-Office is a standalone lightweight productivity experiment, **not an Axiom ERP module**. See source files for the working implementations, and retain independent native applications as fallback.
