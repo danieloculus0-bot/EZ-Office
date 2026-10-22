@@ -90,7 +90,24 @@ EZOffice.register("slides",function(ctx){
     download(name.value||"Presentation.ezslides",JSON.stringify({format:"EZSlides-2",slides:deck}),"application/json");
     markDirty(false);
   },true);
-  button(bar,"Print / PDF",()=>window.print());
+  // Print the ENTIRE slide deck, not just the currently previewed slide.
+  function printDeck(){
+    const printable=elem("div",{className:"slides-print-pages"},root);
+    for(const s of deck){
+      const page=elem("section",{className:"print-slide slide-theme-"+s.theme},printable);
+      page.style.textAlign=s.align;
+      elem("h1",{text:s.title},page);
+      elem("p",{text:s.body},page);
+      if(s.media){
+        if(s.media.kind==="image"){const img=elem("img",{src:s.media.data,alt:s.media.name},page);img.className="slide-print-image";}
+        else elem("p",{text:"Embedded "+s.media.kind+": "+s.media.name+" (available in the editable deck)"},page);
+      }
+    }
+    const cleanup=()=>{printable.remove();window.removeEventListener("afterprint",cleanup);};
+    window.addEventListener("afterprint",cleanup,{once:true});
+    window.print();
+  }
+  button(bar,"Print / PDF",printDeck);
   button(deckTools,"← Previous",()=>changeSlide(at-1));
   button(deckTools,"Next →",()=>changeSlide(at+1));
   button(deckTools,"New slide",()=>{
