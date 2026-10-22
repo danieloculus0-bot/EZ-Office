@@ -55,7 +55,7 @@ def test_browser():
             writer.fill("Formatted sample document")
             writer.press("ControlOrMeta+A")
             page.get_by_role("button",name="Bold",exact=True).click()
-            assert "strong" in writer.inner_html().lower() or "<b>" in writer.inner_html().lower()
+            assert "strong" in writer.inner_html().lower() or "<b>" in writer.inner_html().lower(), repr(writer.inner_html())
             word=downloaded(page,"Save DOCX",p/"document.docx")
             contents=validate_office(word,["word/document.xml","word/styles.xml"])
             assert "Formatted sample document" in contents["word/document.xml"]
