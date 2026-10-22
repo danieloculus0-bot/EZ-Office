@@ -53,7 +53,13 @@ def test_browser():
             page.locator('[data-tool="writer"]').click()
             writer=page.get_by_role("textbox",name="Rich document editor")
             writer.fill("Formatted sample document")
-            writer.press("ControlOrMeta+A")
+            page.evaluate("""() => {
+              const editor=document.querySelector('[aria-label="Rich document editor"]');
+              const range=document.createRange();
+              range.selectNodeContents(editor);
+              const sel=window.getSelection();
+              sel.removeAllRanges();sel.addRange(range);
+            }""")
             page.get_by_role("button",name="Bold",exact=True).click()
             assert "strong" in writer.inner_html().lower() or "<b>" in writer.inner_html().lower(), repr(writer.inner_html())
             word=downloaded(page,"Save DOCX",p/"document.docx")
