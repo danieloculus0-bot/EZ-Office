@@ -69,6 +69,7 @@ EZOffice.register("mail",function(ctx){
     return ["MIME-Version: 1.0","Content-Type: text/plain; charset=UTF-8",
       "To: "+header(to.value),"Cc: "+header(cc.value),"Subject: "+header(subject.value),"",b,""].join("\r\n");
   }
+  button(bar,"Print / PDF",()=>window.print());
   button(bar,"Download .eml",()=>{download("EZ-Office-draft.eml",eml(),"message/rfc822;charset=utf-8");markDirty(false);},true);
   button(bar,"Open in mail app",()=>{
     if((to.value+cc.value+subject.value+body.value).length>1600){message("Draft too large for mailto; export .eml instead");return;}
