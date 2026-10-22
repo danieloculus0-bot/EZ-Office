@@ -49,10 +49,11 @@ nav{display:grid;gap:5px}.nav-item{text-align:left;border:1px solid transparent;
 
 .slides-print-pages{display:none}
 @media print{
-  @page{size:landscape;margin:0}
+  @page{size:auto;margin:12mm}
+  @page ez-slide{size:landscape;margin:0}
   body:has(.slides-print-pages) .slide-editor-layout,body:has(.slides-print-pages) .slide-preview,body:has(.slides-print-pages) .slide-controls{display:none!important}
   body:has(.slides-print-pages) .slides-print-pages{display:block!important}
-  .slides-print-pages .print-slide{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;width:100%;height:100vh;padding:7vw;break-after:page;page-break-after:always;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+  .slides-print-pages .print-slide{page:ez-slide;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:20px;width:100%;height:100vh;padding:7vw;break-after:page;page-break-after:always;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
   .slides-print-pages .print-slide h1{font-size:4vw;line-height:1.1;color:inherit}
   .slides-print-pages .print-slide p{font-size:2.1vw;white-space:pre-wrap;color:inherit}
   .slides-print-pages .slide-print-image{max-height:42vh;max-width:86%;object-fit:contain}
