@@ -9,6 +9,7 @@ on:
       - 'shell.js'
       - 'apps/**'
       - 'assets/**'
+      - 'lib/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -37,13 +38,14 @@ jobs:
           set -euo pipefail
           mkdir -p _site
           cp index.html styles.css shell.js _site/
-          cp -R apps assets _site/
+          cp -R apps assets lib _site/
           touch _site/.nojekyll
           for app in writer sheets slides media mail; do
             test -s "_site/apps/${app}.js"
             node --check "_site/apps/${app}.js"
           done
           node --check _site/shell.js
+          node --check _site/lib/office-export.js
           test -s _site/assets/ez-office.svg
           test -s _site/index.html
           echo "EZ_OFFICE_SITE_ASSETS_PASS"
