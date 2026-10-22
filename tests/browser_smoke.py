@@ -214,7 +214,7 @@ def test_frozen_sheet_panes():
         }""")
         assert metrics["scrollX"]>0 and metrics["scrollY"]>0,metrics
         # Horizontally pinned: corner, row numbers, and first data column.
-        for key in ("corner","row","frozen"):
+        for key in ("corner","col","row","frozen"):
             assert abs(metrics[key]["x"]-metrics["before"][key]["x"])<=2,(key,metrics)
         # Vertically pinned: top-left corner, column letters, and frozen first row.
         for key in ("corner","col","frozen"):
