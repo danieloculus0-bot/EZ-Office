@@ -1,0 +1,61 @@
+name: Publish EZ-Office to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'styles.css'
+      - 'shell.js'
+      - 'apps/**'
+      - 'assets/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ez-office-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble only the actual application
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp index.html styles.css shell.js _site/
+          cp -R apps assets _site/
+          touch _site/.nojekyll
+          for app in writer sheets slides media mail; do
+            test -s "_site/apps/${app}.js"
+            node --check "_site/apps/${app}.js"
+          done
+          node --check _site/shell.js
+          test -s _site/assets/ez-office.svg
+          test -s _site/index.html
+          echo "EZ_OFFICE_SITE_ASSETS_PASS"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static application
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site/
+
+      - name: Deploy public site
+        id: deploy
+        uses: actions/deploy-pages@v4

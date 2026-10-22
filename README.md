@@ -2,6 +2,14 @@
 
 **An offline, lightweight HTML productivity suite** for local files. Designed to eventually run inside [venvWin Portable](https://github.com/danieloculus0-bot/venvWin) using a shared browser engine. No Electron, React, accounts, telemetry or network service required.
 
+## Standalone GitHub Pages
+
+**Public URL:** https://danieloculus0-bot.github.io/EZ-Office/
+
+The repository includes `.github/workflows/pages.yml`, which assembles only the actual HTML, CSS, JavaScript and SVG app assets and publishes them automatically whenever those files change on `main`. It uses the official GitHub Pages artifact and deploy actions; it does not depend on Jekyll, a Node application build or a paid hosting service.
+
+**One-time repository setting (required if that URL returns 404):** Open [EZ-Office Settings → Pages](https://github.com/danieloculus0-bot/EZ-Office/settings/pages), select **GitHub Actions** under **Build and deployment → Source**, then use the **Publish EZ-Office to GitHub Pages** workflow in the [Actions tab](https://github.com/danieloculus0-bot/EZ-Office/actions/workflows/pages.yml) to run it if it has not deployed automatically. The standard repository `GITHUB_TOKEN` cannot reliably enable Pages for the first time by itself; this repository setting may require the owner. Verify the action shows a successful deployment before treating the public URL as live.
+
 ## Try the live Workshop demo
 
 **[Launch EZ-Office in BEAN Workshop](https://danieloculus0-bot.github.io/BEAN/portfolio/ez-office/)** · [Workshop project directory](https://danieloculus0-bot.github.io/BEAN/portfolio/)
