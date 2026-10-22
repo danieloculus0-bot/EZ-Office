@@ -56,7 +56,7 @@ def test_browser():
             page.evaluate("""() => {
               const editor=document.querySelector('[aria-label="Rich document editor"]');
               const range=document.createRange();
-              range.selectNodeContents(editor);
+              range.selectNodeContents(editor.querySelector("p")||editor);
               const sel=window.getSelection();
               sel.removeAllRanges();sel.addRange(range);
             }""")
