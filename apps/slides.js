@@ -81,6 +81,11 @@ EZOffice.register("slides",function(ctx){
     }
     message("Deck opened");
   }));
+  button(bar,"Save PowerPoint",()=>{
+    download((name.value.replace(/.(ezslides|pptx|txt|json)$/i,"")||"Presentation")+".pptx",
+      EZOfficeExport.pptx(deck),"application/vnd.openxmlformats-officedocument.presentationml.presentation");
+    markDirty(false);
+  },true);
   button(bar,"Save deck",()=>{
     download(name.value||"Presentation.ezslides",JSON.stringify({format:"EZSlides-2",slides:deck}),"application/json");
     markDirty(false);
@@ -135,6 +140,6 @@ EZOffice.register("slides",function(ctx){
     deck.length=0;stage.replaceChildren();
   });
   loadFields();repaint();
-  info("Edit titles, layouts and themes; rearrange, duplicate or delete slides; embed actual image, audio and video files that survive .ezslides save/reopen. Present fullscreen or print. File sizes are bounded. Native PowerPoint PPTX format is not yet supported.");
+  info("Export real .pptx for PowerPoint/LibreOffice with slide text, themes and image media; embedded audio/video remains in .ezslides and is stored as media in PPTX with playback subject to app support. Print / Save as PDF is available. Edit titles, layouts and themes; rearrange, duplicate or delete slides; embed actual image, audio and video files that survive .ezslides save/reopen. Present fullscreen or print. File sizes are bounded. Advanced native PowerPoint editing and animations are not supported.");
 });
 })();
