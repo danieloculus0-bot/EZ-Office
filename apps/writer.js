@@ -78,7 +78,12 @@ EZOffice.register("writer",function(ctx){
     else{editor.replaceChildren();const p=document.createElement("p");p.textContent=t;editor.append(p);editor.style.whiteSpace="pre-wrap";}
     name.value=file.name;mark(false);tally();message("Opened "+file.name);
   }));
-  button(bar,"Save HTML",()=>save(false),true);
+  button(bar,"Save DOCX",()=>{
+    const basename=(name.value.replace(/[\/]/g,"_").replace(/.(html?|txt|md|docx)$/i,"")||"Document");
+    download(basename+".docx",EZOfficeExport.docx(editor),"application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    mark(false);
+  },true);
+  button(bar,"Save HTML",()=>save(false));
   button(bar,"Export text",()=>save(true));
   button(bar,"Print / PDF",()=>window.print());
   button(bar,"New",()=>{
@@ -94,7 +99,7 @@ EZOffice.register("writer",function(ctx){
   document.addEventListener("keydown",key);
   onDispose(()=>document.removeEventListener("keydown",key));
   tally();
-  info("Real editable formatted HTML: headings, bold, italic, underline, lists, alignment, colors and printing. Opens HTML safely with restricted tags. Native DOCX import/export and complex page layout are not supported.");
+  info("Export real DOCX for Word and LibreOffice, HTML, plain text, and Print / Save as PDF from your browser. Real editable formatted HTML: headings, bold, italic, underline, lists, alignment, colors and printing. Opens HTML safely with restricted tags. DOCX import and advanced page layout remain unsupported.");
   return ()=>{editor.replaceChildren();};
 });
 })();
