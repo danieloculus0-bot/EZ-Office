@@ -73,7 +73,7 @@ def test_browser():
             assert writer.locator("script").count()==0
             assert writer.locator('[onclick]').count()==0
             assert page.evaluate("window.bad===undefined")
-            assert "Visible heading" in writer.inner_text()
+            expect(writer).to_contain_text("Visible heading")
             page.locator('[data-tool="home"]').click()
 
             # Sheets: dependencies, cell changes, circular errors and XLSX.
@@ -107,7 +107,7 @@ def test_browser():
             with page.expect_file_chooser() as picker:
                 page.get_by_role("button",name="Insert image / audio / video").click()
             picker.value.set_files(str(photo))
-            assert page.locator(".slide-preview img").count()==1
+            expect(page.locator(".slide-preview img")).to_have_count(1)
             deck=downloaded(page,"Save deck",p/"show.ezslides")
             data=json.loads(deck.read_text())
             assert data["format"]=="EZSlides-2"
@@ -124,7 +124,7 @@ def test_browser():
             with page.expect_file_chooser() as picker:
                 page.get_by_role("button",name="Open deck").click()
             picker.value.set_files(str(deck))
-            assert page.locator(".slide-preview img").count()==1
+            expect(page.locator(".slide-preview img")).to_have_count(1)
             page.locator('[data-tool="home"]').click()
 
             # Media: export exact bytes and revoke blob URL on closure.
@@ -132,7 +132,7 @@ def test_browser():
             with page.expect_file_chooser() as picker:
                 page.get_by_role("button",name="Open media").click()
             picker.value.set_files(str(photo))
-            assert page.locator(".media-stage img").count()==1
+            expect(page.locator(".media-stage img")).to_have_count(1)
             with page.expect_download() as d:
                 page.get_by_role("button",name="Save original").click()
             out=p/"copy.png";d.value.save_as(out)
