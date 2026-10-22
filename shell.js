@@ -37,20 +37,23 @@
   function choose(accept,callback){
     const input=elem("input",{type:"file",accept},document.body);
     input.hidden=true;
+    let done=false;
+    function cleanup(){if(!done){done=true;input.remove();}}
+    input.addEventListener("cancel",cleanup,{once:true});
     input.addEventListener("change",()=>{
       const file=input.files&&input.files[0];
-      input.remove();
+      cleanup();
       if(file)Promise.resolve(callback(file)).catch(e=>message("Open failed: "+e.message));
     },{once:true});
     input.click();
-    // Canceled file pickers can leave no event in older browsers; no large resources held.
+    return cleanup;
   }
   function context(id){
     let alive=true;
     const disposers=[];
     return {
       root,elem,button,message,download,
-      choose:(accept,callback)=>choose(accept,async file=>{if(alive)await callback(file);}),
+      choose:(accept,callback)=>{const cancel=choose(accept,async file=>{if(alive)await callback(file);});disposers.push(cancel);},
       toolbar:()=>elem("div",{className:"toolbar"},root),
       info:text=>elem("p",{className:"info",text},root),
       onDispose:fn=>disposers.push(fn),
