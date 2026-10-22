@@ -1,5 +1,17 @@
 # EZ-Office engineering boundaries
 
+## October 22 feature expansion: viable output per application
+
+This suite now includes an **actual Office Open XML exporter** in `lib/office-export.js`, implemented with a small dependency-free ZIP writer (CRC32, central directory, UTF-8 path entries) and minimal DOCX, XLSX and PPTX package builders. Each is a genuine XML-based Office archive; complex fidelity is limited. The export test downloads files through Chromium, checks ZIP integrity and parses their XML entries. The PDF route uses native print / Save as PDF, not an invented binary serializer.
+
+- **Writer:** contenteditable formatted text, toolbar, restricted HTML import, DOCX, HTML and TXT save; print/PDF. Future work: DOCX import, tables, page styles and robust accessibility.
+- **Sheets:** bounded recursive-descent formula evaluation with dependency tracking, circular reference errors, standard arithmetic and SUM/AVERAGE/MIN/MAX/COUNT/IF; XLSX, CSV and native JSON workbook export; print/PDF. Formula cells are exported with actual SpreadsheetML formula nodes, not just rendered values. Future work: XLSX import, formatting, sorting/filtering and charts.
+- **Slides:** title, body, notes, themes, ordering, fullscreen, bounded embedded image/audio/video asset persistence. PPTX export contains basic presentation XML and embedded asset entries. Image media has slide relationships; audio/video entries are retained for interoperability experiments, but their native PowerPoint playback is not verified. The `.ezslides` native format is the faithful multimedia round-trip. Entire deck prints as multiple pages.
+- **Media:** save unmodified originals, export still PNG frames, print images; browser codec support determines playable formats. No transcoding.
+- **Mail:** `.eml`, print/PDF and system mail handoff work offline; optional real Google Gmail and Microsoft Graph delegated OAuth/PKCE adapters can fetch message previews and send drafts only after user-approved authorization and registration of OAuth public client IDs. No token persistence, passwords, secret keys or silent sending. The static site does not provide a pre-registered provider application.
+
+Security and compatibility boundaries: never parse untrusted formulas with `eval`; HTML import strips scripts, event handlers and active/remote content; embedded slide media and table dimensions are capped. Cross-application editing should maintain local data boundaries and explicit download/save semantics. The mail OAuth scopes must be approved under Google/Microsoft policies. The DOCX/PPTX/XLSX implementations are an initial interoperable subset, not Microsoft Office feature parity.
+
 ## What exists in this iteration
 - **EZ Writer:** edits real plain-text and Markdown files, has word/character count, local download copy, keyboard shortcut.
 - **EZ Sheets:** parses and exports CSV with quoted commas, escaped quotes and multiline cells; bounded to 5,000 rows and 40 columns, renders at most 45 rows per page. No formula evaluation or XLSX.
