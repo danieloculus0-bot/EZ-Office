@@ -14,24 +14,31 @@ The repository includes `.github/workflows/pages.yml`, which assembles only the 
 
 **[Launch EZ-Office in BEAN Workshop](https://danieloculus0-bot.github.io/BEAN/portfolio/ez-office/)** · [Workshop project directory](https://danieloculus0-bot.github.io/BEAN/portfolio/)
 
-The Workshop hosts the **working HTML/CSS/JavaScript suite**, not a mockup. Writer, CSV Sheets, Slides, Media, and Mail drafts run locally in your browser. No login or server-side upload is part of the app. Save a copy before switching tools or leaving the page. Avoid confidential files on shared devices.
+The Workshop hosts a **version-pinned copy of the actual application**, not a mockup. Verify its release version before assuming newer features from this repository have been mirrored there. Writer, CSV Sheets, Slides, Media, and Mail drafts run locally in your browser. OAuth login is optional for mail; opening ordinary document files never uploads them to a server. Save a copy before switching tools or leaving the page. Avoid confidential files on shared devices.
 
 The Workshop copy is currently published from a known version of EZ-Office. Source updates to this repository are **not automatically synchronized** to the Workshop; version upgrades require copying and testing the changed assets in BEAN.
 
 ## Start
 Open `index.html` in a modern browser. All tool scripts, styles and icons ship locally. The workspace uses one window and loads tools only when selected, with no installation step or dependency download.
 
-## Implemented tools
+## Real office tools and output formats
 
-| Tool | Real working features | Honest boundaries |
+EZ-Office is no longer just a text box. It is a **working small office suite**, built with plain JavaScript and no Electron/React/runtime frameworks.
+
+| Tool | Functional editing | Viable outputs |
 | --- | --- | --- |
-| Writer | Open and edit TXT/MD, word count, keyboard save and local file download | Plain text, not DOCX or rich text |
-| Sheets | CSV import/export with proper quoted-field handling, editable cells, paged grid, add rows/columns | No XLSX or formulas |
-| Slides | Edit text slides, previous/next, fullscreen, export editable deck | No PPTX |
-| Media | Local video/audio playback and image display, release resources on switch | Browser-supported codecs only |
-| Mail drafts | Compose to/cc/subject/body, export .eml, open system mail application | No inbox, IMAP/SMTP connection or sending |
+| **EZ Writer** | Rich formatting: bold, italic, underline, strike, headings, text colors, alignment, numbered/bulleted lists, undo/redo, HTML import, plain-text paste | **DOCX**, HTML, TXT, **Print / Save as PDF** |
+| **EZ Sheets** | Recalculating formulas, cell references/ranges, SUM, AVERAGE, MIN, MAX, COUNT, IF, arithmetic, powers; circular/dependency error display; editable grid and CSV import | **XLSX** with formulas, CSV, editable `.ezsheet` file, **Print / Save as PDF** |
+| **EZ Slides** | Slide titles, body text, speaker notes, themes, alignment, slide ordering, duplicate/delete, fullscreen presentation, **embedded images, audio and video** | **PPTX** (text/themes/images and attached audio/video media), native `.ezslides` with all embedded multimedia, **Print / Save as PDF** |
+| **EZ Media** | Browser-supported local image, audio and video playback | **Save original**, export current image/video frame to PNG, **Print / Save as PDF** |
+| **EZ Mail** | Real local draft editing, Gmail inbox preview/send through Google OAuth, Outlook inbox preview/send through Microsoft OAuth PKCE | **EML**, system mail handler, authorized Gmail/Outlook send, **Print / Save as PDF** |
 
-**No fake backend:** every listed operation is implemented. Unimplemented compatibility and synchronization are explicitly excluded.
+**Interoperability boundaries:** DOCX/XLSX/PPTX exports are actual zipped Office Open XML packages, not files renamed to those extensions. The test suite inspects their ZIP members and XML. These are basic document outputs, not full Office replacements: complex Word layout, native DOCX/XLSX/PPTX *import*, charts, advanced formatting, PowerPoint animations and seamless audio/video playback in every presentation viewer are not promised. Use `.ezslides` to preserve the richest in-browser presentation media and editing capabilities.
+
+**Email setup:** The Gmail and Outlook integrations make real delegated provider API requests, but require you to register an OAuth public client in Google Cloud / Microsoft Entra, configure the specific hosted HTTPS origin/redirect, and consent to the requested mail scopes. No built-in app credentials or passwords are supplied. Tokens are held in session memory, and an OAuth provider may require admin approval. **The standalone file:// mode cannot connect to providers**; it still supports offline EML drafts. Do not enter secrets into the client-ID fields.
+
+Print / PDF uses the operating system browser printing dialog; choose **Save as PDF** where available. There is no fake proprietary PDF encoder.
+
 
 ## Design
 - One HTML shell, one active app at a time; lazy scripts and explicit cleanup of active document state
@@ -47,7 +54,7 @@ Open `index.html` in a modern browser. All tool scripts, styles and icons ship l
 GitHub Actions executes JavaScript syntax checks and a **real offline browser smoke test** covering every tool, file round-trips, and local URL disposal. Locally, use:
 
 ```sh
-for file in shell.js apps/*.js; do node --check "$file"; done
+for file in shell.js lib/*.js apps/*.js; do node --check "$file"; done
 python -m pip install playwright
 python -m playwright install chromium
 python tests/browser_smoke.py

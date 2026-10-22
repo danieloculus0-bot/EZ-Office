@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: JavaScript syntax
         run: |
-          for file in shell.js apps/*.js; do
+          for file in shell.js lib/*.js apps/*.js; do
             node --check "$file"
           done
       - uses: actions/setup-python@v5
