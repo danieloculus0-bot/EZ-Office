@@ -1,45 +1,44 @@
-# EZ-Office • functionality and deployability audit
+# EZ-Office • buildout and deployability audit
 
-**Pass 01 — October 22, 2026**
+## Pass 02 — Office interoperability and usable sheet outputs (October 22, 2026)
 
-## How to interpret status
+This release adds an **offline, bounded DOCX/XLSX reader**, sorting/filtering views and a proper sheet print layout. Office files never leave the user's browser when opened or saved.
 
-- **Implemented:** UI and application logic are present in the repository.
-- **Automated coverage:** Tested through the real local-file browser application, not a fake data model.
-- **Deployable:** Static files can be published to an existing GitHub Pages host; production access requires a successful host deployment.
-- **Not verified:** Integration tests requiring customer accounts, external providers, desktop Linux hardware, or full Office applications have not been performed.
+### Module-by-module changes and evidence
 
-## Module scorecard
+| Area | Implemented this pass | Verification target and boundary |
+| --- | --- | --- |
+| Writer | **Open DOCX** — imports ordinary Word paragraphs, headings, basic bold/italic/underline/strikethrough; text, notes and existing edit/export tools remain | Round-trip EZ-Office DOCX after ZIP DEFLATE recompression. No images, tracked changes, tables with layout, headers/footers, charts, macros or sophisticated Word formatting |
+| Sheets | **Open XLSX** — reads first worksheet, ZIP/DEFLATE, shared strings, inline strings, numeric values and basic formulas | Round-trip ZIP-compressed exported workbook plus externally shaped relationship path/shared-string fixture. No XLSX style/layout/merged cells, dates as formatted dates, charts, pivot tables or multiple editable sheet tabs |
+| Sheets views | Filter text across data rows; non-destructively sort by a chosen column ascending/descending; export **visible CSV with evaluated values** | Browser verifies filtered row count, physical coordinate labels, view sort and CSV output. Source sheet order and formulas are unchanged. Ordinary Save XLSX/CSV saves the full source order; export visible CSV follows the active view |
+| Sheets PDF | **Print / PDF** generates a complete table of the visible rows, values and headings, rather than only the first 35 editor rows | Print bounded to 200 data rows and 20 columns. Large data must use XLSX/CSV. PDF is the browser's native Save as PDF option |
+| Mobile | Maintains tested **independent** row-number and column-letter gutters with one native touch-scrollable cell viewport | Existing Chromium/WebKit two-axis geometry tests remain a mandatory gate; view sort must not freeze any data column |
+| Shared import engine | Local ZIP reader with stored/DEFLATE blocks, CRC verification, central-directory parsing, XML parsing and resource caps | 10 MB input, 16 MB max per uncompressed part, 40 MB total. Reject encrypted archives, unsupported ZIP methods, malformed XML and oversized files rather than attempting unsupported transformations |
+| Slides | Keep existing media decks, PPTX output, navigator, outline/notes export, multi-slide PDF | Native PPTX import, animations, consistent embedded audio/video playback, complete PowerPoint notes/objects not yet supported |
+| Media | Keep playback speed, looping, metadata and image/video PNG frame output | Media transcoding and comprehensive browser-codec compatibility remain unsupported |
+| Mail | Keep offline EML draft round-trip, Gmail/Microsoft delegated OAuth adapters | Real provider approval, token/session expiry flows, attachments and external mailbox tests not yet verified |
+| Deployment | Keep static Pages artifact and separately mirror tested build into BEAN Workshop | Verify source and Workshop tests, then merge, then confirm Pages deployment; standalone EZ-Office Pages still requires owner setting |
 
-| Area | Pre-pass limitations | Pass 01 improvement | Verification and important remaining gaps |
-| --- | --- | --- | --- |
-| Shared shell | Could lose edits by accidentally closing/reloading browser | Native unsaved-edit warning for reload/tab close; existing switch confirmation and explicit teardown preserved | Browser dialog behavior depends on browser; no autosave or persistent open-file handles |
-| Writer | Rich formatting and DOCX export but no document search | Find next and replace all, preserving formatting in other text nodes | Real browser edits/HTML sanitization/DOCX ZIP and XML tested; matches spanning several formatted text nodes are not supported; no DOCX import |
-| Sheets | Formula evaluation, CSV/XLSX export, native workbook and stable mobile grid but awkward data entry | Paste Excel/Sheets tab-separated rectangular ranges; jump directly to A1-style cell references; correct aggregate formulas over ranges containing text headers | Real browser tests exercise dependencies, export, clipboard paste and jump; import of XLSX, charts, drag fill, filters, and formula-reference rewriting after sorts remain unavailable |
-| Slides | Rich multimedia decks without an overview or useful notes export | Clickable slide navigator and export of text outline plus presenter notes | Real browser tests exercise navigator, `.ezslides` media round-trip and PPTX ZIP/XML; full native PPTX audio/video playback and animations not guaranteed |
-| Media | Browser media player, original download, PNG frame capture without transport preferences | Real audio/video speed, loop, and dimensions/duration indicators | Browser file playback and speed/loop controls tested with generated WAV; codec coverage, transcoding and non-image printing not implemented |
-| Mail | EML draft export and delegated Gmail/Outlook OAuth code, no EML reopening | Load local plain-text `.eml` drafts for editing and reexport | Plain-text EML round-trip tested. Multipart attachments/HTML/quoted-printable/base64 import rejected honestly. No live account authorization validated; provider OAuth needs owner-created public client registration/approval |
-| Deployment | EZ-Office Pages site may 404 until repository owner enables it; Workshop manually vendored | Retain lightweight static artifact, add this release audit and browser verification across Chromium + WebKit for mobile grid | Workshop is the functional demo host; standalone Pages still requires owner action. Production publish receipt is separate from an application test |
+### Security and technical boundaries
 
-## Current release gates
+- The import library uses **no online document conversion**. It reads ZIP contents locally, rejects over-budget entries and verifies checksums before parsing XML; does not invoke script contents.
+- The first Excel worksheet is parsed. Formula **text** is preserved for the existing local evaluator; unsupported functions may correctly display an error rather than an invented result. Shared formulas and external workbook links are not guaranteed to be reconstructed.
+- Non-destructive sort/filter avoids corrupting cell references. A sorted/filtered view is not a destructive reorder of the underlying workbook. The user can download the visible table as evaluated CSV.
+- Print output is deliberately limited to manageable dimensions to prevent freezing mobile browsers on thousands of rows.
+- Neither tiny JavaScript files nor browser tests constitute evidence of venvWin hardware RAM savings.
 
-1. JavaScript syntax: `node --check shell.js lib/*.js apps/*.js`.
-2. Actual browser workflows: `python tests/browser_smoke.py` after installing Playwright 1.55.0 Chromium + WebKit.
-3. Office outputs: ZIP integrity and required OOXML parts validated with Python `zipfile` and XML parser.
-4. Mobile: 360px and 390px viewport overflow tests plus independent row/column axis geometry at 390px in Chromium and WebKit.
-5. Network boundary: offline test requires no HTTP requests for ordinary document operations. External API traffic is only expected after explicit mail authorization.
-6. Workshop publication: BEAN deploy workflow must be green, and the vendored copies of the application assets must match tested EZ-Office source.
+### Release gates
 
-## Release architecture and memory
+1. JavaScript syntax checks on all \`shell.js\`, \`apps/*.js\` and \`lib/*.js\`.
+2. Actual browser tests in Chromium, plus WebKit coverage for the phone-size spreadsheet coordinate layer.
+3. Import **DEFLATE-compressed Office archives**, native-export round-trips, a shared-string workbook and corrupted/over-budget file rejection.
+4. The original working features (Writer formatting and DOCX export; Sheets formulas/CSV/XLSX export; Slides multimedia/PowerPoint export; Media file playback; Mail draft export) must continue passing their tests.
+5. A clean BEAN Workshop copy from the validated main tree and a successful Pages deployment receipt. Do not call the standalone Pages site live unless enabled and verified.
 
-One browser engine and one active app DOM; scripts load lazily. Media object URLs are revoked when leaving Media. The 35-row paged spreadsheet avoids rendering thousands of inputs. None of this proves lower RSS/PSS than native programs: run actual host measurements on target venvWin hardware before replacing desktop office applications.
+### Next gaps (Pass 03)
 
-## Next passes, based on measured gaps
+More complete DOCX tables and lists, Excel cell styles/dates/merged ranges, formula-relative sorting only when its correctness can be proven, PPTX compatibility and note retention, real Gmail/Outlook provider-approved authorization with test accounts, better accessible print output and performance measurements on actual venvWin.
 
-**Pass 02 (interoperability):** native DOCX and XLSX import, tabular cell formatting and data filters, robust DOCX/PPTX compatibility fixtures, proper print ranges and PDF layout, image accessibility.
+## Pass 01 — prior established baseline
 
-**Pass 03 (connected workflows):** provider-approved OAuth app registration and end-to-end Gmail/Outlook read/send tests with test accounts, richer MIME/attachments, credential lifecycle, saved file permissions, accessibility keyboard audit.
-
-**Pass 04 (deployment/performance):** venvWin App launcher, real iPhone Safari acceptance test, WebKitGTK cold/warm RSS/PSS benchmarking, browser launch behavior, offline packaged-release smoke.
-
-Neither the next passes nor any hardware/account verification is claimed as complete in this pass.
+Pass 01 added Writer find/replace, Sheets tabular clipboard paste/cell navigation and mixed text/numeric formula aggregates, Slides navigator and outline/notes output, Media playback speed/loop metadata, Mail plain-text EML import, and a shared unsaved-edit confirmation. This pass preserves those features and the independent mobile spreadsheet header architecture.
