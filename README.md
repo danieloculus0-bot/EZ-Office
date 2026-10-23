@@ -21,6 +21,14 @@ The Workshop copy is currently published from a known version of EZ-Office. Sour
 ## Start
 Open `index.html` in a modern browser. All tool scripts, styles and icons ship locally. The workspace uses one window and loads tools only when selected, with no installation step or dependency download.
 
+## Native media playback validation — pass 03
+
+**[Playback formats, real test results and venvWin requirements](docs/MEDIA_COMPATIBILITY.md)**.
+
+EZ Media now has explicit user-initiated **Play / Pause**, seek-back/forward, native media timeline/volume controls, responsive video, format capability checks, and readable decode/error/status messages. MP3, WAV and WebM actual native playback have been exercised in Chromium and WebKit; MP4 H.264/AAC played in WebKit's Linux test build, while the tested Chromium build did not advertise support. Embedded EZ Slides audio/video also uses native controls and a user-initiated playback button. No plugin, decoder download, CDN, JS codec package, or FFmpeg runtime is added.
+
+A browser does still need native system multimedia decoding. WebKitGTK on venvWin/Linux relies on GStreamer; **no venvWin system-image packaging or physical speaker verification has been performed**. Automated playback tests generate realistic clips using FFmpeg **in CI only**, and verify advancing media time plus decoded video frames.
+
 ## Engineering buildout — pass 02
 
 **[Pass 02 functionality and deployability audit](docs/BUILDOUT_AUDIT.md)** documents what works, how it was tested, and what's still limited.
@@ -46,7 +54,7 @@ EZ-Office is no longer just a text box. It is a **working small office suite**, 
 | **EZ Writer** | DOCX import (paragraphs/headings/emphasis), rich formatting, find/replace, headings, colors, alignment, lists, undo/redo, sanitized HTML import and plain-text paste | **DOCX**, HTML, TXT, **Print / Save as PDF** |
 | **EZ Sheets** | First-sheet XLSX import, view sorting/filtering, full-table print, recalculating formulas and ranges, SUM/AVERAGE/MIN/MAX/COUNT/IF, circular error reporting, tabular clipboard paste, cell navigation and CSV import | **XLSX** with formulas, CSV, editable `.ezsheet` file, filtered evaluated CSV, **Print / Save as PDF** |
 | **EZ Slides** | Slide navigator, titles, speaker notes, themes, reordering, duplication, fullscreen presentations and **embedded images, audio and video** | **PPTX** (limited, multiline text and alignment), native `.ezslides` retaining multimedia, **text outline/notes**, **Print / Save as PDF** |
-| **EZ Media** | Browser-supported image/audio/video, playback speed, loop, and dimensions/duration display | **Save original**, export current image/video frame to PNG, **Print / Save as PDF** |
+| **EZ Media** | Tested built-in audio/video playback, pause/play, ±10-second seeking, browser codec check, speed, loop, timeline and file metadata | **Save original**, export decoded still/video frame to PNG, **Print / Save as PDF** |
 | **EZ Mail** | Offline EML import/edit/export; Gmail preview/send OAuth and Outlook OAuth PKCE adapters (client registration required) | **EML**, system mail handler, authorized Gmail/Outlook send, **Print / Save as PDF** |
 
 **Interoperability boundaries:** DOCX/XLSX/PPTX exports are actual zipped Office Open XML packages, not files renamed to those extensions. The test suite inspects their ZIP members and XML. These are basic document outputs, not full Office replacements: complex Word layout, complex DOCX/XLSX content and native PPTX *import*, charts, advanced formatting, PowerPoint animations and seamless audio/video playback in every presentation viewer are not promised. Use `.ezslides` to preserve the richest in-browser presentation media and editing capabilities.
@@ -74,6 +82,7 @@ for file in shell.js lib/*.js apps/*.js; do node --check "$file"; done
 python -m pip install playwright
 python -m playwright install chromium webkit
 python tests/browser_smoke.py
+python tests/media_playback_smoke.py  # ffmpeg needed only to create test fixtures
 ```
 
 The Playwright dependency is for development tests only, **not** required to use EZ-Office. The CI checks include WebKit spreadsheet scrolling; they do not prove an actual iPhone Safari session, production OAuth approval, venvWin memory, or hardware boot.
