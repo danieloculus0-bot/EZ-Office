@@ -153,6 +153,20 @@ def test_browser():
             page.get_by_role("searchbox",name="Filter spreadsheet rows").fill("Fasteners")
             expect(page.locator(".sheet-index-cell")).to_have_count(2)
             expect(page.get_by_role("textbox",name="A3",exact=True)).to_have_value("Fasteners")
+            page.evaluate("""() => {
+              window.__sheetPrint=null;
+              window.print=()=>{
+                const page=document.querySelector(".sheet-print-pages");
+                window.__sheetPrint={rows:page?.querySelectorAll("tbody tr").length,
+                                     headers:page?.querySelectorAll("thead th").length,
+                                     text:page?.textContent};
+                window.dispatchEvent(new Event("afterprint"));
+              };
+            }""")
+            page.get_by_role("button",name="Print / PDF").click()
+            printable=page.evaluate("window.__sheetPrint")
+            assert printable["rows"]==1 and printable["headers"]==8,printable
+            assert "Fasteners" in printable["text"] and "Sheet metal" not in printable["text"]
             visible_csv=downloaded(page,"Export visible CSV",p/"visible.csv",min_bytes=20)
             assert "Fasteners" in visible_csv.read_text()
             assert "Sheet metal" not in visible_csv.read_text()
