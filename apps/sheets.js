@@ -294,11 +294,32 @@ EZOffice.register("sheets",function(ctx){
     download(filenameX,blob,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     markDirty(false);
   },true);
-  button(bar,"Print / PDF",()=>window.print());
+  button(bar,"Print / PDF",()=>{
+    const visible=viewRows();
+    if(visible.length>201||cols>20){message("Print is limited to 200 data rows and 20 columns. Use XLSX or Export visible CSV for large tables.");return;}
+    const paper=elem("div",{className:"sheet-print-pages"},root);
+    elem("h1",{text:filename.value||"EZ Sheets"},paper);
+    const table=elem("table",{className:"sheet-print-table"},paper);
+    const head=elem("thead",{},table),heading=elem("tr",{},head);
+    for(let c=0;c<cols;c++)elem("th",{text:String(rows[0]?.[c]||colLabel(c))},heading);
+    const tbody=elem("tbody",{},table);
+    for(const r of visible.slice(1)){
+      const tr=elem("tr",{},tbody);
+      for(let c=0;c<cols;c++){
+        const raw=String(rows[r]?.[c]??"");
+        let result=raw;
+        if(raw.startsWith("=")){try{result=String(calculate(rows,r,c));}catch(e){result=e.message||"#ERROR!";}}
+        elem("td",{text:result},tr);
+      }
+    }
+    const cleanup=()=>{paper.remove();window.removeEventListener("afterprint",cleanup);};
+    window.addEventListener("afterprint",cleanup,{once:true});
+    window.print();
+  });
   button(bar,"Save CSV",()=>{download((filename.value||"Sheet.csv").replace(/\.(ezsheet|json)$/i,".csv"),csvText(values()),"text/csv;charset=utf-8");markDirty(false);},true);
   button(bar,"Save workbook",()=>{download("Workbook.ezsheet",JSON.stringify({format:"EZSheet-1",rows:values()}),"application/json");markDirty(false);});
   button(bar,"Add row",()=>{if(rows.length>=MAX_ROWS){message("Row limit reached");return;}rows.push(Array(cols).fill(""));page=Math.floor((rows.length-1)/PAGE_SIZE);markDirty(true);render();});
-  button(bar,"Add column",()=>{if(cols>=MAX_COLS){message("Column limit reached");return;}cols++;rows.forEach(r=>r.push(""));markDirty(true);render();});
+  button(bar,"Add column",()=>{if(cols>=MAX_COLS){message("Column limit reached");return;}cols++;rows.forEach(r=>r.push(""));refreshSortOptions();markDirty(true);render();});
   onDispose(()=>{if(frame)cancelAnimationFrame(frame);rows.length=0;});
   refreshSortOptions();render();
   info("Export real .xlsx for Excel/LibreOffice, CSV, .ezsheet with formulas, or Print / Save PDF. Paste tabular ranges from a spreadsheet and jump directly to a cell. Functional formulas: =A1*B1, =SUM(A1:A9), AVERAGE, MIN, MAX, COUNT, IF, arithmetic, powers and references. Circular references and division by zero report errors. CSV preserves formula text; .ezsheet preserves editable formulas. Imports the first XLSX worksheet (numbers, shared strings, basic formulas). Filter and sort affect the view only; Save XLSX/CSV retains source order, while Export visible CSV writes evaluated visible values. Charts, merges, styling and other sheets are not imported.");
