@@ -289,7 +289,7 @@ EZOffice.register("sheets",function(ctx){
     if(ctx.isActive())setRows(data.rows,file.name);
   }));
   button(bar,"Save XLSX",()=>{
-    const filenameX=(filename.value.replace(/.(csv|json|ezsheet|xlsx)$/i,"")||"Workbook")+".xlsx";
+    const filenameX=(filename.value.replace(/\.(csv|json|ezsheet|xlsx)$/i,"")||"Workbook")+".xlsx";
     const blob=EZOfficeExport.xlsx(values(),(r,c)=>calculate(rows,r,c));
     download(filenameX,blob,"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     markDirty(false);
@@ -316,8 +316,8 @@ EZOffice.register("sheets",function(ctx){
     window.addEventListener("afterprint",cleanup,{once:true});
     window.print();
   });
-  button(bar,"Save CSV",()=>{download((filename.value||"Sheet.csv").replace(/\.(ezsheet|json)$/i,".csv"),csvText(values()),"text/csv;charset=utf-8");markDirty(false);},true);
-  button(bar,"Save workbook",()=>{download("Workbook.ezsheet",JSON.stringify({format:"EZSheet-1",rows:values()}),"application/json");markDirty(false);});
+  button(bar,"Save CSV",()=>{download((filename.value||"Sheet").replace(/\.(csv|xlsx|ezsheet|json)$/i,"")+".csv",csvText(values()),"text/csv;charset=utf-8");markDirty(false);},true);
+  button(bar,"Save workbook",()=>{download((filename.value||"Workbook").replace(/\.(csv|xlsx|ezsheet|json)$/i,"")+".ezsheet",JSON.stringify({format:"EZSheet-1",rows:values()}),"application/json");markDirty(false);});
   button(bar,"Add row",()=>{if(rows.length>=MAX_ROWS){message("Row limit reached");return;}rows.push(Array(cols).fill(""));page=Math.floor((rows.length-1)/PAGE_SIZE);markDirty(true);render();});
   button(bar,"Add column",()=>{if(cols>=MAX_COLS){message("Column limit reached");return;}cols++;rows.forEach(r=>r.push(""));refreshSortOptions();markDirty(true);render();});
   onDispose(()=>{if(frame)cancelAnimationFrame(frame);rows.length=0;});
