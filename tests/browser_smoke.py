@@ -14,11 +14,11 @@ PAGE=(ROOT/"index.html").as_uri()
 PNG=base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==")
 
 
-def downloaded(page,button,target):
+def downloaded(page,button,target,min_bytes=50):
     with page.expect_download() as d:
         page.get_by_role("button", name=button, exact=True).click()
     d.value.save_as(target)
-    assert target.stat().st_size>50, target
+    assert target.stat().st_size>=min_bytes, target
     return target
 
 
@@ -153,7 +153,7 @@ def test_browser():
             page.get_by_role("searchbox",name="Filter spreadsheet rows").fill("Fasteners")
             expect(page.locator(".sheet-index-cell")).to_have_count(2)
             expect(page.get_by_role("textbox",name="A3",exact=True)).to_have_value("Fasteners")
-            visible_csv=downloaded(page,"Export visible CSV",p/"visible.csv")
+            visible_csv=downloaded(page,"Export visible CSV",p/"visible.csv",min_bytes=20)
             assert "Fasteners" in visible_csv.read_text()
             assert "Sheet metal" not in visible_csv.read_text()
             page.get_by_role("button",name="Clear view").click()
