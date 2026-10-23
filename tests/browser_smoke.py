@@ -185,7 +185,8 @@ def test_browser():
             # Slides: image embedded in both native deck and PPTX.
             page.locator('[data-tool="slides"]').click()
             page.get_by_role("textbox",name="Slide title").fill("Revenue overview")
-            page.get_by_role("textbox",name="Slide body").fill("Hello slideshow")
+            page.get_by_role("textbox",name="Slide body").fill("Hello slideshow\nSecond line")
+            page.get_by_role("combobox",name="Text alignment").select_option("left")
             with page.expect_file_chooser() as picker:
                 page.get_by_role("button",name="Insert image / audio / video").click()
             picker.value.set_files(str(photo))
@@ -197,6 +198,9 @@ def test_browser():
             slides=downloaded(page,"Save PowerPoint",p/"show.pptx")
             content=validate_office(slides,["ppt/presentation.xml","ppt/slides/slide1.xml","ppt/slides/slide2.xml"])
             assert "Revenue overview" in content["ppt/slides/slide1.xml"]
+            assert "Second line" in content["ppt/slides/slide1.xml"]
+            assert 'algn="l"' in content["ppt/slides/slide1.xml"]
+            assert content["ppt/slides/slide1.xml"].count("<a:p>")>=3
             with zipfile.ZipFile(slides) as z:
                 assert "ppt/media/media1.png" in z.namelist()
                 assert z.read("ppt/media/media1.png")==PNG
