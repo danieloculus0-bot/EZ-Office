@@ -103,6 +103,14 @@ def main():
                 page=browser.new_page(viewport={"width":390,"height":844},
                     device_scale_factor=2,is_mobile=True,has_touch=True)
                 page.goto(PAGE)
+                page.evaluate("""() => {
+                  window.__mediaRevoked=[];
+                  const original=URL.revokeObjectURL;
+                  URL.revokeObjectURL=url=>{
+                    window.__mediaRevoked.push(url);
+                    return original.call(URL,url);
+                  };
+                }""")
                 assert page.evaluate("EZOffice.inspect().current")=="home"
                 page.locator('[data-tool="media"]').click()
                 expect(page.get_by_role("button",name="Play / Pause")).to_be_disabled()
@@ -127,7 +135,17 @@ def main():
                 scripts=page.locator("script[src]").evaluate_all(
                     "elements=>elements.map(el=>el.getAttribute('src'))")
                 assert all(not s.startswith(("https:","http:")) for s in scripts),scripts
+                # An unsupported container must report a decoding error, not falsely say ready.
+                bad=Path(temp)/"invalid.mkv"
+                bad.write_bytes(b"not media codec data "*128)
+                choose_file(page,bad)
+                page.wait_for_function("""() => {
+                  const text=document.querySelector('.media-playback-state')?.textContent||'';
+                  return text.includes('unsupported')||text.includes('Decoding failed')||text.includes('Could not play');
+                }""",timeout=9000)
+                assert "browser" in page.locator(".media-playback-state").inner_text().lower()
                 page.get_by_role("button",name="Close media").click()
+                assert page.evaluate("window.__mediaRevoked.length")>=2
                 expect(page.locator(".media-stage audio,.media-stage video")).to_have_count(0)
                 assert page.get_by_role("button",name="Play / Pause").is_disabled()
                 assert "Media released" in page.locator(".media-playback-state").inner_text()
