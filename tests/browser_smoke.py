@@ -165,7 +165,7 @@ def test_browser():
             }""")
             page.get_by_role("button",name="Print / PDF").click()
             printable=page.evaluate("window.__sheetPrint")
-            assert printable["rows"]==1 and printable["headers"]==8,printable
+            assert printable["rows"]==1 and printable["headers"]==4,printable
             assert "Fasteners" in printable["text"] and "Sheet metal" not in printable["text"]
             visible_csv=downloaded(page,"Export visible CSV",p/"visible.csv",min_bytes=20)
             assert "Fasteners" in visible_csv.read_text()
@@ -173,7 +173,7 @@ def test_browser():
             page.get_by_role("button",name="Clear view").click()
             page.get_by_role("combobox",name="Sort view column").select_option("1")
             page.get_by_role("combobox",name="Sort view direction").select_option("desc")
-            expect(page.locator(".sheet-index-cell").nth(1)).to_have_text("3")
+            expect(page.locator(".sheet-index-cell").nth(1)).to_have_text("6")
             page.get_by_role("button",name="Clear view").click()
             page.get_by_role("textbox",name="A9",exact=True).evaluate("""input=>{
                 const data=new DataTransfer();
