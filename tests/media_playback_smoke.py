@@ -118,6 +118,29 @@ def main():
                 expect(page.locator(".media-stage audio,.media-stage video")).to_have_count(0)
                 assert page.get_by_role("button",name="Play / Pause").is_disabled()
                 assert "Media released" in page.locator(".media-playback-state").inner_text()
+                # Slides uses the same native decoding path for embedded data: media.
+                page.locator('[data-tool="slides"]').click()
+                for mediaKind,path in (
+                    ("video",next(f for _,f in video if results[f.suffix][0])),
+                    ("audio",next(f for _,f in audio if results[f.suffix][0]))
+                ):
+                    with page.expect_file_chooser() as dialog:
+                        page.get_by_role("button",name="Insert image / audio / video").click()
+                    dialog.value.set_files(str(path))
+                    embedded=page.locator(".slide-preview "+mediaKind)
+                    expect(embedded).to_have_count(1)
+                    page.wait_for_function("""kind=>{
+                      const el=document.querySelector('.slide-preview '+kind);
+                      return el&&(el.readyState>=1||!!el.error);
+                    }""",arg=mediaKind,timeout=10000)
+                    assert embedded.evaluate("e=>e.error===null"),(engine.name,path)
+                    page.get_by_role("button",name="Play / Pause slide media").click()
+                    page.wait_for_function("""kind=>{
+                      const el=document.querySelector('.slide-preview '+kind);
+                      return el&&el.currentTime>0.3;
+                    }""",arg=mediaKind,timeout=8000)
+                    assert embedded.evaluate("e=>e.currentTime")>0.3
+                    print("NATIVE_SLIDES_MEDIA_PASS",engine.name,path.suffix)
                 print("NATIVE_MEDIA_PLAYBACK_PASS",engine.name,results)
                 browser.close()
 
