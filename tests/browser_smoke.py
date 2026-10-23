@@ -163,7 +163,7 @@ def test_browser():
             audio=p/"sound.wav"
             with wave.open(str(audio),"wb") as wav:
                 wav.setnchannels(1);wav.setsampwidth(2);wav.setframerate(8000)
-                wav.writeframes(b"\\x00\\x00"*8000)
+                wav.writeframes(bytes(16000))
             with page.expect_file_chooser() as picker:
                 page.get_by_role("button",name="Open media").click()
             picker.value.set_files(str(audio))
