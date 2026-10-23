@@ -74,6 +74,19 @@ def playback(page,file,kind):
         }""",arg=kind,timeout=8000)
     except PlaywrightTimeoutError:
         return (False,"timeline did not progress: "+page.locator(".media-playback-state").inner_text())
+    if kind=="video":
+        # Verify an actual decoded frame has rendered, not merely a moving clock.
+        pixels=element.evaluate("""el=>{
+          const canvas=document.createElement("canvas");
+          canvas.width=el.videoWidth;canvas.height=el.videoHeight;
+          const context=canvas.getContext("2d",{willReadFrequently:true});
+          context.drawImage(el,0,0);
+          const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;
+          let energy=0;
+          for(let i=0;i<rgba.length;i+=4)energy+=rgba[i]+rgba[i+1]+rgba[i+2];
+          return energy;
+        }""")
+        assert pixels>10000,("No decoded video frame in canvas",pixels)
     if element.evaluate("el=>el.paused") is False:
         page.get_by_role("button",name="Play / Pause").click()
     assert page.get_by_role("button",name="← 10s").is_enabled()
