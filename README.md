@@ -21,17 +21,25 @@ The Workshop copy is currently published from a known version of EZ-Office. Sour
 ## Start
 Open `index.html` in a modern browser. All tool scripts, styles and icons ship locally. The workspace uses one window and loads tools only when selected, with no installation step or dependency download.
 
+## Engineering buildout — pass 01
+
+**[Read the functionality/deployability audit](docs/BUILDOUT_AUDIT.md)** for current evidence, supported file formats, deployment gates, known limitations and the next prioritized iterations.
+
+This pass strengthens every app without increasing the runtime framework footprint: Writer can find and replace content while preserving existing text formatting, Sheets can paste ranges and jump to cells, Slides has a clickable navigator and notes/outline export, Media adds playback speed/loop and metadata, Mail can reopen plain-text EML drafts, and the shell warns before leaving with unsaved changes.
+
+Actual tests run in Chromium, plus WebKit tests covering the mobile spreadsheet header alignment. The Gmail/Outlook connectors still require separately registered OAuth public clients and live external-account verification; native DOCX/XLSX/PPTX **import** has not been implemented. **Do not infer account readiness, file-format fidelity, or low RAM from a passing frontend test.**
+
 ## Real office tools and output formats
 
 EZ-Office is no longer just a text box. It is a **working small office suite**, built with plain JavaScript and no Electron/React/runtime frameworks.
 
 | Tool | Functional editing | Viable outputs |
 | --- | --- | --- |
-| **EZ Writer** | Rich formatting: bold, italic, underline, strike, headings, text colors, alignment, numbered/bulleted lists, undo/redo, HTML import, plain-text paste | **DOCX**, HTML, TXT, **Print / Save as PDF** |
-| **EZ Sheets** | Recalculating formulas, cell references/ranges, SUM, AVERAGE, MIN, MAX, COUNT, IF, arithmetic, powers; circular/dependency error display; editable grid and CSV import | **XLSX** with formulas, CSV, editable `.ezsheet` file, **Print / Save as PDF** |
-| **EZ Slides** | Slide titles, body text, speaker notes, themes, alignment, slide ordering, duplicate/delete, fullscreen presentation, **embedded images, audio and video** | **PPTX** (text/themes/images and attached audio/video media), native `.ezslides` with all embedded multimedia, **Print / Save as PDF** |
-| **EZ Media** | Browser-supported local image, audio and video playback | **Save original**, export current image/video frame to PNG, **Print / Save as PDF** |
-| **EZ Mail** | Real local draft editing, Gmail inbox preview/send through Google OAuth, Outlook inbox preview/send through Microsoft OAuth PKCE | **EML**, system mail handler, authorized Gmail/Outlook send, **Print / Save as PDF** |
+| **EZ Writer** | Rich formatting, find/replace, headings, colors, alignment, lists, undo/redo, sanitized HTML import and plain-text paste | **DOCX**, HTML, TXT, **Print / Save as PDF** |
+| **EZ Sheets** | Recalculating formulas and ranges, SUM/AVERAGE/MIN/MAX/COUNT/IF, circular error reporting, tabular clipboard paste, cell navigation and CSV import | **XLSX** with formulas, CSV, editable `.ezsheet` file, **Print / Save as PDF** |
+| **EZ Slides** | Slide navigator, titles, speaker notes, themes, reordering, duplication, fullscreen presentations and **embedded images, audio and video** | **PPTX** (limited), native `.ezslides` retaining multimedia, **text outline/notes**, **Print / Save as PDF** |
+| **EZ Media** | Browser-supported image/audio/video, playback speed, loop, and dimensions/duration display | **Save original**, export current image/video frame to PNG, **Print / Save as PDF** |
+| **EZ Mail** | Offline EML import/edit/export; Gmail preview/send OAuth and Outlook OAuth PKCE adapters (client registration required) | **EML**, system mail handler, authorized Gmail/Outlook send, **Print / Save as PDF** |
 
 **Interoperability boundaries:** DOCX/XLSX/PPTX exports are actual zipped Office Open XML packages, not files renamed to those extensions. The test suite inspects their ZIP members and XML. These are basic document outputs, not full Office replacements: complex Word layout, native DOCX/XLSX/PPTX *import*, charts, advanced formatting, PowerPoint animations and seamless audio/video playback in every presentation viewer are not promised. Use `.ezslides` to preserve the richest in-browser presentation media and editing capabilities.
 
@@ -43,7 +51,7 @@ Print / PDF uses the operating system browser printing dialog; choose **Save as 
 ## Design
 - One HTML shell, one active app at a time; lazy scripts and explicit cleanup of active document state
 - Local file picker and downloads, no document uploads and no always-on background polling
-- CSV grid renders a maximum of 45 rows at once and caps file/table sizes
+- CSV grid renders a maximum of 35 rows at once and caps file/table sizes
 - Local media uses blob URLs revoked at closure to avoid retaining full video data in JS
 - Browser engine RAM remains significant and must be measured on actual venvWin hardware; tiny KB source size alone does not prove low RAM
 - **Native venvWin office apps stay in place** until compatibility and memory benchmarks justify replacement
@@ -56,11 +64,11 @@ GitHub Actions executes JavaScript syntax checks and a **real offline browser sm
 ```sh
 for file in shell.js lib/*.js apps/*.js; do node --check "$file"; done
 python -m pip install playwright
-python -m playwright install chromium
+python -m playwright install chromium webkit
 python tests/browser_smoke.py
 ```
 
-The Playwright dependency is for development tests only, **not** required to use EZ-Office. This test proves Chromium behavior with a local file, not Epiphany-on-vEnvWin memory or hardware boot.
+The Playwright dependency is for development tests only, **not** required to use EZ-Office. The CI checks include WebKit spreadsheet scrolling; they do not prove an actual iPhone Safari session, production OAuth approval, venvWin memory, or hardware boot.
 
 ## Project scope
 EZ-Office is a standalone lightweight productivity experiment, **not an Axiom ERP module**. See source files for the working implementations, and retain independent native applications as fallback.
