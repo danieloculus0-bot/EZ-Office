@@ -1,5 +1,17 @@
 # EZ-Office • buildout and deployability audit
 
+## Pass 03 — native media playback validation (October 22, 2026)
+
+**Purpose:** Verify actual audio and video decoding, not merely the existence of HTML players. See [Media compatibility evidence](MEDIA_COMPATIBILITY.md).
+
+- **Media app:** Native HTML audio/video playback with Play/Pause, ±10-second seeking, responsive picture, metadata and explicit progress/decoder failure messages. Check Formats reports only browser-declared capability estimates.
+- **Slides:** User-initiated native embedded video/audio playback, inline iPhone/WebKit video and explicit unsupported-codec feedback.
+- **Regression:** Real generated 2-second MP4 H.264/AAC, WebM VP8/Opus, MP3 and WAV files; Playwright Chromium and WebKit drive browser-decoded timeline, video pixels, embedded Slides media and local object-URL cleanup. In the tested environment, Chromium did not advertise H.264/AAC support (not claimed); WebKit successfully played MP4 and both engines played WebM, MP3 and WAV.
+- **Deployment:** Static app assets; no CDN, media converter, JavaScript codec package, or media plugins. FFmpeg used **only to generate test media in CI**; never shipped to users.
+- **Limits:** Browser/OS must provide native decoding; WebKitGTK Linux relies on GStreamer. No universal MKV/MOV/HEVC/DRM support claim; venvWin packaging, physical iPhone Safari, real speakers, and hardware RAM benchmarks are unverified.
+
+**Release gate:** both GitHub repositories must test the real browser playback fixtures and preserve the separate mobile Sheets scroll regression. GitHub Pages deployment success is required before calling the Workshop version public.
+
 ## Pass 02 — Office interoperability and usable sheet outputs (October 22, 2026)
 
 This release adds an **offline, bounded DOCX/XLSX reader**, sorting/filtering views and a proper sheet print layout. Office files never leave the user's browser when opened or saved.
