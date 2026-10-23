@@ -270,7 +270,10 @@ EZOffice.register("sheets",function(ctx){
   }
   function setRows(input,name){
     if(!Array.isArray(input)||input.length>MAX_ROWS||input.some(r=>!Array.isArray(r)||r.length>MAX_COLS))throw Error("Grid exceeds 5,000 rows or 40 columns");
-    cols=Math.max(1,...input.map(r=>r.length));rows=(input.length?input:[[""]]).map(r=>Array.from({length:cols},(_,i)=>String(r[i]??"")));
+    cols=Math.max(1,...input.map(r=>r.length));
+    // Imported workbooks often omit unused trailing rows. Keep blank editing room.
+    rows=Array.from({length:Math.max(15,input.length)},(_,r)=>
+      Array.from({length:cols},(_,i)=>String(input[r]?.[i]??"")));
     filename.value=name;resetView();refreshSortOptions();markDirty(false);render();message("Opened "+name);
   }
   button(bar,"Open CSV",()=>choose(".csv,text/csv,text/plain",async file=>{
