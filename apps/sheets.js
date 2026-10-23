@@ -113,15 +113,15 @@ EZOffice.register("sheets",function(ctx){
   const summary=elem("small",{},bar);
   // Fixed coordinate headers live OUTSIDE the scrolling cell viewport.
   // No sticky table cells, no frozen data cells, no overlapping scroll layers.
-  const frame=elem("div",{className:"sheet-frame"},root);
-  frame.style.setProperty("--sheet-cell-width",CELL_WIDTH+"px");
-  frame.style.setProperty("--sheet-row-height",ROW_HEIGHT+"px");
-  elem("div",{className:"sheet-corner",text:"#","aria-label":"Row and column corner"},frame);
-  const topHeader=elem("div",{className:"sheet-x-header","aria-label":"Column labels"},frame);
+  const sheetFrame=elem("div",{className:"sheet-frame"},root);
+  sheetFrame.style.setProperty("--sheet-cell-width",CELL_WIDTH+"px");
+  sheetFrame.style.setProperty("--sheet-row-height",ROW_HEIGHT+"px");
+  elem("div",{className:"sheet-corner",text:"#","aria-label":"Row and column corner"},sheetFrame);
+  const topHeader=elem("div",{className:"sheet-x-header","aria-label":"Column labels"},sheetFrame);
   const columnStrip=elem("div",{className:"sheet-x-strip"},topHeader);
-  const sideHeader=elem("div",{className:"sheet-y-header","aria-label":"Row numbers"},frame);
+  const sideHeader=elem("div",{className:"sheet-y-header","aria-label":"Row numbers"},sheetFrame);
   const rowStrip=elem("div",{className:"sheet-y-strip"},sideHeader);
-  const host=elem("div",{className:"grid-wrap",tabindex:"0","aria-label":"Scrollable spreadsheet cells"},frame);
+  const host=elem("div",{className:"grid-wrap",tabindex:"0","aria-label":"Scrollable spreadsheet cells"},sheetFrame);
   const controls=toolbar();
   function syncHeaders(){
     columnStrip.style.transform="translate3d("+(-host.scrollLeft)+"px,0,0)";
