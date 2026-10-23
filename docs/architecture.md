@@ -1,43 +1,40 @@
-# EZ-Office engineering boundaries
+# EZ-Office architecture and deployment
 
-## October 22 feature expansion: viable output per application
+For the current per-module scorecard, test evidence and upcoming work, see **[Buildout Audit — Pass 01](BUILDOUT_AUDIT.md)**.
 
-This suite now includes an **actual Office Open XML exporter** in `lib/office-export.js`, implemented with a small dependency-free ZIP writer (CRC32, central directory, UTF-8 path entries) and minimal DOCX, XLSX and PPTX package builders. Each is a genuine XML-based Office archive; complex fidelity is limited. The export test downloads files through Chromium, checks ZIP integrity and parses their XML entries. The PDF route uses native print / Save as PDF, not an invented binary serializer.
+## Runtime
 
-- **Writer:** contenteditable formatted text, toolbar, restricted HTML import, DOCX, HTML and TXT save; print/PDF. Future work: DOCX import, tables, page styles and robust accessibility.
-- **Sheets:** bounded recursive-descent formula evaluation with dependency tracking, circular reference errors, standard arithmetic and SUM/AVERAGE/MIN/MAX/COUNT/IF; XLSX, CSV and native JSON workbook export; print/PDF. Formula cells are exported with actual SpreadsheetML formula nodes, not just rendered values. Future work: XLSX import, formatting, sorting/filtering and charts.
-- **Slides:** title, body, notes, themes, ordering, fullscreen, bounded embedded image/audio/video asset persistence. PPTX export contains basic presentation XML and embedded asset entries. Image media has slide relationships; audio/video entries are retained for interoperability experiments, but their native PowerPoint playback is not verified. The `.ezslides` native format is the faithful multimedia round-trip. Entire deck prints as multiple pages.
-- **Media:** save unmodified originals, export still PNG frames, print images; browser codec support determines playable formats. No transcoding.
-- **Mail:** `.eml`, print/PDF and system mail handoff work offline; optional real Google Gmail and Microsoft Graph delegated OAuth/PKCE adapters can fetch message previews and send drafts only after user-approved authorization and registration of OAuth public client IDs. No token persistence, passwords, secret keys or silent sending. The static site does not provide a pre-registered provider application.
+EZ-Office is an HTML/CSS/JavaScript application with no framework or Node/Electron runtime. Open `index.html` as a local file or publish it under a static web host. The shell lazily loads each tool on first use; only one tool's UI and document state are mounted at a time. Disposers clean event handlers, media buffers and object URLs when possible. Leaving a document with unsaved changes triggers a browser confirmation, but **there is no autosave or in-place overwrite**.
 
-Security and compatibility boundaries: never parse untrusted formulas with `eval`; HTML import strips scripts, event handlers and active/remote content; embedded slide media and table dimensions are capped. Cross-application editing should maintain local data boundaries and explicit download/save semantics. The mail OAuth scopes must be approved under Google/Microsoft policies. The DOCX/PPTX/XLSX implementations are an initial interoperable subset, not Microsoft Office feature parity.
+Source modules:
 
-## What exists in this iteration
-- **EZ Writer:** edits real plain-text and Markdown files, has word/character count, local download copy, keyboard shortcut.
-- **EZ Sheets:** parses and exports CSV with quoted commas, escaped quotes and multiline cells; bounded to 5,000 rows and 40 columns, renders at most 45 rows per page. No formula evaluation or XLSX.
-- **EZ Slides:** edits text decks using a line containing `---` between slides, local save, next/previous and fullscreen presentation. No PPTX.
-- **EZ Media:** opens local images, audio, and video with browser-supported codecs, pauses and revokes object URLs on closure. No transcoding.
-- **EZ Mail:** constructs real `.eml` drafts and can hand off to a configured desktop mail client through `mailto:`. No IMAP, SMTP, inbox, account tokens, sending or synchronization.
+- `shell.js` — lifecycle, lazy loading, file pickers, downloads, unsaved-edit guard.
+- `apps/writer.js` — formatted contenteditable document, find/replace, sanitized HTML import, DOCX/HTML/TXT export and browser print.
+- `apps/sheets.js` — bounded CSV/workbook model, formulas, clipboard paste, cell navigation and independently positioned scrolling coordinate gutters. A native mobile scrollport, not sticky table cells, keeps the row and column labels aligned.
+- `apps/slides.js` — multimedia slide decks, themes, presenter notes, slide navigation and outline export.
+- `apps/media.js` — browser media playback, speed/loop, metadata and local export.
+- `apps/mail.js` — local plain-text EML editing plus delegated Gmail and Microsoft Graph OAuth adapters (the latter **not tested with live accounts**).
+- `lib/office-export.js` — dependency-free basic OOXML ZIP export for DOCX, XLSX and PPTX. **No native OOXML import**.
+- `styles.css` — responsive shell, document, slide and media layout.
 
-Every tool is actual working file/UI code, not a demo placeholder for a promised backend. No user file is uploaded. Browser file-picker and download APIs require user interaction and cannot overwrite originals silently.
+No user file is sent to a server for document workflows. Mail intentionally accesses provider APIs **only after** an explicit OAuth connection. Never embed OAuth client secrets in this static application.
 
-## RAM design
-1. The browser/GTK WebKit engine is **shared by the whole EZ-Office window**. An installed browser can still use substantial memory independently of the tiny HTML files.
-2. The shell loads the code for a tool via a classic local `script` element **on first activation**. This works when opening `file://.../index.html`, unlike several browser-restricted ES module import patterns.
-3. Only one tool's DOM and working data live at a time. On switching, its disposal hook removes event listeners, clears document arrays and releases object URLs. JavaScript garbage collection is owned by the browser, not the app; closed resources become collectible but immediate OS RAM release is not guaranteed.
-4. No React, Electron, npm runtime, per-tool browser processes, telemetry, service workers, auto-sync or background timers. The only timer is a short-lived downloaded-blob cleanup.
-5. The data budget is intentionally constrained. Spreadsheets use a **paged DOM**; media uses a blob URL instead of `file.arrayBuffer()` of the entire movie.
+## Output and interoperability
 
-## Integration with venvWin
-venvWin's current core image already includes Epiphany/WebKit for the FUN games; Firefox ESR is used in the larger profiles. A separate desktop launcher can open EZ-Office's local index file in the existing engine. **Do not remove AbiWord, Gnumeric, mousepad, or other native fallbacks yet:** the EZ-Office MVP does not offer comparable document compatibility or measured peak RAM.
+DOCX, XLSX and PPTX output consists of actual ZIP/OOXML entries, which automated tests validate structurally. It does not promise pixel-identical formatting or all Office functions. PPTX has limited native audio/video interoperability; `.ezslides` is the higher-fidelity multimedia round-trip. EML import supports basic plain-text messages; unsupported MIME structures are rejected. PDFs are made using the browser's native **Print → Save as PDF**, not a PDF serializer.
 
-A future common app-host may embed a persistent, single WebKit view and switch local routes, but first measure whether the chosen WebKit browser reuses one renderer or creates extra processes/tabs. “Shared engine” does **not** inherently mean shared memory pages or a single process. Browser cache, GPU, font and codec memory must be accounted for.
+## Deployment
 
-## Test and measurement
-- `python tests/browser_smoke.py` opens the exact local `file://` URL in headless Chromium, edits and round-trips a text file/CSV, presents slides, tests media URL revocation, exports a mail draft and checks no HTTP(S) requests occur. Development-only dependency: `pip install playwright && python -m playwright install chromium`.
-- `node --check shell.js` and `node --check apps/*.js` (per file) verify JavaScript syntax.
-- Real RAM numbers require measuring RSS/PSS with `/usr/bin/time -v`, `smem`, or `/proc/<pid>/smaps_rollup` on the **target machine**, comparing native app cold boot, shared engine idle, each tool loaded and after closing. Do not infer OS RAM from source-file KB, a JS heap statistic, or a successful smoke test.
-- Chromium is a development test browser; Epiphany/WebKit on actual venvWin hardware requires separate validation.
+1. GitHub Actions `.github/workflows/ci.yml` runs syntax checks and browser interactions, including WebKit tests of the mobile sheet.
+2. `.github/workflows/pages.yml` packages the actual app as static assets, checks syntax and attempts a GitHub Pages deployment from `main`.
+3. The standalone Pages URL (`/EZ-Office/`) requires GitHub Pages to be enabled and **GitHub Actions** selected as source. The repo owner may need to perform this one-time setting before deployment can succeed.
+4. The BEAN Workshop (`/BEAN/portfolio/ez-office/`) holds a separately vendored copy. When releasing, synchronize files and pass the BEAN Workshop browser and Pages deployment gates; merging EZ-Office alone does not update BEAN.
+5. Test on actual iPhone Safari and venvWin WebKitGTK hardware before calling either runtime supported or optimized.
 
-## Next work
-Actual DOCX/XLSX/PPTX interoperability, rich-text layout and printing fidelity, data formulas, secure document conversion, PDF annotation, OS file associations, and email transport would require dedicated engines/backend work. Track separately and prove each feature with real file fixtures.
+## Memory and packaging
+
+The office scripts and HTML are small and only one tool DOM is mounted. This does **not** remove browser engine RAM, and JavaScript GC may not immediately return memory to the OS. The spreadsheet renders one 35-row page of inputs and keeps the workbook data in memory, while media uses browser-native object URLs. Measure RSS/PSS, cold boot and memory after tool switching on the intended Linux target instead of equating file size with peak RAM.
+
+## Maintenance expectations
+
+Every buildout pass should include: (1) a specific user-visible improvement; (2) an actual browser interaction/format round-trip test; (3) a clear supported-versus-untested claim; (4) a clean deployment to the Workshop and source; (5) updates to the [audit](BUILDOUT_AUDIT.md). Native Office import, cross-app sharing, and provider credentials should not appear as finished features until their tests exist.
