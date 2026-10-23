@@ -150,7 +150,7 @@ def test_browser():
             # clear cycle before leaving
             b.fill("=A6+5")
             # Sort and filter are view-only; original physical row ids remain correct.
-            page.get_by_role("textbox",name="Filter spreadsheet rows").fill("Fasteners")
+            page.get_by_role("searchbox",name="Filter spreadsheet rows").fill("Fasteners")
             expect(page.locator(".sheet-index-cell")).to_have_count(2)
             expect(page.get_by_role("textbox",name="A3",exact=True)).to_have_value("Fasteners")
             visible_csv=downloaded(page,"Export visible CSV",p/"visible.csv")
