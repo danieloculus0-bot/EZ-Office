@@ -21,6 +21,14 @@ The Workshop copy is currently published from a known version of EZ-Office. Sour
 ## Start
 Open `index.html` in a modern browser. All tool scripts, styles and icons ship locally. The workspace uses one window and loads tools only when selected, with no installation step or dependency download.
 
+## Engineering buildout — pass 02
+
+**[Pass 02 functionality and deployability audit](docs/BUILDOUT_AUDIT.md)** documents what works, how it was tested, and what's still limited.
+
+The suite now imports **ordinary DOCX and XLSX files locally** without uploading them to an online converter. Writer opens Word paragraphs, headings and common text formatting. Sheets opens the first Excel worksheet, handling numeric values, formulas, inline strings and shared strings from compressed ZIP files. Sheets also has a non-destructive text filter, numeric/text sort views, **Export visible CSV**, and a full filtered-sheet Print / Save as PDF layout (bounded to 200 data rows × 20 columns to protect mobile browsers). PowerPoint export preserves text alignment and paragraph breaks.
+
+These are deliberately limited interoperability features: complex Word tables/images/page layout and advanced Excel sheet styles, merged cells, formulas, external links and multiple worksheets are not fully supported. **Sort/filter change the view, not the original spreadsheet data.** Save XLSX/CSV exports original order; Export visible CSV writes the selected view's calculated values.
+
 ## Engineering buildout — pass 01
 
 **[Read the functionality/deployability audit](docs/BUILDOUT_AUDIT.md)** for current evidence, supported file formats, deployment gates, known limitations and the next prioritized iterations.
@@ -35,13 +43,13 @@ EZ-Office is no longer just a text box. It is a **working small office suite**, 
 
 | Tool | Functional editing | Viable outputs |
 | --- | --- | --- |
-| **EZ Writer** | Rich formatting, find/replace, headings, colors, alignment, lists, undo/redo, sanitized HTML import and plain-text paste | **DOCX**, HTML, TXT, **Print / Save as PDF** |
-| **EZ Sheets** | Recalculating formulas and ranges, SUM/AVERAGE/MIN/MAX/COUNT/IF, circular error reporting, tabular clipboard paste, cell navigation and CSV import | **XLSX** with formulas, CSV, editable `.ezsheet` file, **Print / Save as PDF** |
-| **EZ Slides** | Slide navigator, titles, speaker notes, themes, reordering, duplication, fullscreen presentations and **embedded images, audio and video** | **PPTX** (limited), native `.ezslides` retaining multimedia, **text outline/notes**, **Print / Save as PDF** |
+| **EZ Writer** | DOCX import (paragraphs/headings/emphasis), rich formatting, find/replace, headings, colors, alignment, lists, undo/redo, sanitized HTML import and plain-text paste | **DOCX**, HTML, TXT, **Print / Save as PDF** |
+| **EZ Sheets** | First-sheet XLSX import, view sorting/filtering, full-table print, recalculating formulas and ranges, SUM/AVERAGE/MIN/MAX/COUNT/IF, circular error reporting, tabular clipboard paste, cell navigation and CSV import | **XLSX** with formulas, CSV, editable `.ezsheet` file, filtered evaluated CSV, **Print / Save as PDF** |
+| **EZ Slides** | Slide navigator, titles, speaker notes, themes, reordering, duplication, fullscreen presentations and **embedded images, audio and video** | **PPTX** (limited, multiline text and alignment), native `.ezslides` retaining multimedia, **text outline/notes**, **Print / Save as PDF** |
 | **EZ Media** | Browser-supported image/audio/video, playback speed, loop, and dimensions/duration display | **Save original**, export current image/video frame to PNG, **Print / Save as PDF** |
 | **EZ Mail** | Offline EML import/edit/export; Gmail preview/send OAuth and Outlook OAuth PKCE adapters (client registration required) | **EML**, system mail handler, authorized Gmail/Outlook send, **Print / Save as PDF** |
 
-**Interoperability boundaries:** DOCX/XLSX/PPTX exports are actual zipped Office Open XML packages, not files renamed to those extensions. The test suite inspects their ZIP members and XML. These are basic document outputs, not full Office replacements: complex Word layout, native DOCX/XLSX/PPTX *import*, charts, advanced formatting, PowerPoint animations and seamless audio/video playback in every presentation viewer are not promised. Use `.ezslides` to preserve the richest in-browser presentation media and editing capabilities.
+**Interoperability boundaries:** DOCX/XLSX/PPTX exports are actual zipped Office Open XML packages, not files renamed to those extensions. The test suite inspects their ZIP members and XML. These are basic document outputs, not full Office replacements: complex Word layout, complex DOCX/XLSX content and native PPTX *import*, charts, advanced formatting, PowerPoint animations and seamless audio/video playback in every presentation viewer are not promised. Use `.ezslides` to preserve the richest in-browser presentation media and editing capabilities.
 
 **Email setup:** The Gmail and Outlook integrations make real delegated provider API requests, but require you to register an OAuth public client in Google Cloud / Microsoft Entra, configure the specific hosted HTTPS origin/redirect, and consent to the requested mail scopes. No built-in app credentials or passwords are supplied. Tokens are held in session memory, and an OAuth provider may require admin approval. **The standalone file:// mode cannot connect to providers**; it still supports offline EML drafts. Do not enter secrets into the client-ID fields.
 
