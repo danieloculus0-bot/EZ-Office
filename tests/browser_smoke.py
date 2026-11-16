@@ -133,6 +133,15 @@ def test_browser():
             expect(page.locator('[data-result="6:1"]')).to_have_text("12")
             expect(page.locator('[data-result="6:2"]')).to_have_text("2")
             expect(page.locator('[data-result="6:3"]')).to_have_text("6")
+            # Financial and geometric formulas evaluate in-browser and export as formulas.
+            page.get_by_role("textbox",name="A8",exact=True).fill("=ROUND(10/3,2)")
+            page.get_by_role("textbox",name="B8",exact=True).fill("=ABS(-12.5)")
+            page.get_by_role("textbox",name="C8",exact=True).fill("=SQRT(81)")
+            page.get_by_role("textbox",name="D8",exact=True).fill("=SQRT(-1)")
+            expect(page.locator('[data-result="7:0"]')).to_have_text("3.33")
+            expect(page.locator('[data-result="7:1"]')).to_have_text("12.5")
+            expect(page.locator('[data-result="7:2"]')).to_have_text("9")
+            expect(page.locator('[data-result="7:3"]')).to_have_text("#NUM!")
             xlsx=downloaded(page,"Save XLSX",p/"sheet.xlsx")
             content=validate_office(xlsx,["xl/worksheets/sheet1.xml","xl/workbook.xml"])
             assert "<f>A6*2+3</f>" in content["xl/worksheets/sheet1.xml"]
