@@ -94,6 +94,19 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
           if(tok==="MIN")return nums.length?Math.min(...nums):0;
           if(tok==="MAX")return nums.length?Math.max(...nums):0;
           if(tok==="COUNT")return nums.length;
+          if(tok==="ROUND"){
+            if(args.length!==2)throw Error("#ARGS!");
+            const digits=number(args[1]);
+            if(!Number.isInteger(digits)||digits<0||digits>12)throw Error("#NUM!");
+            const scale=10**digits;
+            return Math.round((number(args[0])+Number.EPSILON)*scale)/scale;
+          }
+          if(tok==="ABS"||tok==="SQRT"){
+            if(args.length!==1)throw Error("#ARGS!");
+            const n=number(args[0]);
+            if(tok==="SQRT"&&n<0)throw Error("#NUM!");
+            return tok==="ABS"?Math.abs(n):Math.sqrt(n);
+          }
           if(tok==="IF"){if(args.length!==3)throw Error("#ARGS!");return number(args[0])?args[1]:args[2];}
           throw Error("#NAME?");
         }
@@ -325,6 +338,6 @@ EZOffice.register("sheets",function(ctx){
   button(bar,"Add column",()=>{if(cols>=MAX_COLS){message("Column limit reached");return;}cols++;rows.forEach(r=>r.push(""));refreshSortOptions();markDirty(true);render();});
   onDispose(()=>{if(frame)cancelAnimationFrame(frame);rows.length=0;});
   refreshSortOptions();render();
-  info("Export real .xlsx for Excel/LibreOffice, CSV, .ezsheet with formulas, or Print / Save PDF. Paste tabular ranges from a spreadsheet and jump directly to a cell. Functional formulas: =A1*B1, =SUM(A1:A9), AVERAGE, MIN, MAX, COUNT, IF, arithmetic, powers and references. Circular references and division by zero report errors. CSV preserves formula text; .ezsheet preserves editable formulas. Imports the first XLSX worksheet (numbers, shared strings, basic formulas). Filter and sort affect the view only; Save XLSX/CSV retains source order, while Export visible CSV writes evaluated visible values. Charts, merges, styling and other sheets are not imported.");
+  info("Export real .xlsx for Excel/LibreOffice, CSV, .ezsheet with formulas, or Print / Save PDF. Paste tabular ranges from a spreadsheet and jump directly to a cell. Functional formulas: =A1*B1, =SUM(A1:A9), AVERAGE, MIN, MAX, COUNT, IF, ROUND, ABS, SQRT, arithmetic, powers and references. Circular references and division by zero report errors. CSV preserves formula text; .ezsheet preserves editable formulas. Imports the first XLSX worksheet (numbers, shared strings, basic formulas). Filter and sort affect the view only; Save XLSX/CSV retains source order, while Export visible CSV writes evaluated visible values. Charts, merges, styling and other sheets are not imported.");
 });
 })();
