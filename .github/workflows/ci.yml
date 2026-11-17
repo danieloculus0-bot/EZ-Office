@@ -14,6 +14,8 @@ jobs:
           for file in shell.js lib/*.js apps/*.js; do
             node --check "$file"
           done
+      - name: CSV export formula safety regression
+        run: node --test tests/csv_formula_guard.test.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
