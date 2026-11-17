@@ -21,7 +21,14 @@ function parseCSV(text){
   return rows;
 }
 function csvText(rows){return rows.map(row=>row.map(v=>{
-  const text=String(v??"");return /[",\r\n]/.test(text)?'"'+text.replace(/"/g,'""')+'"':text;
+  const original=String(v??"");
+  // CSV is a data interchange format, not a trusted spreadsheet formula channel.
+  // Preserve ordinary signed numeric measurements, but neutralize text that a
+  // spreadsheet application could interpret as a formula when opened.
+  const dangerous=/^[\\t\\r\\n ]*[=+@-]/.test(original);
+  const numeric=/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$/.test(original.trim());
+  const text=dangerous&&!numeric?"'"+original:original;
+  return /[",\\r\\n]/.test(text)?'"'+text.replace(/"/g,'""')+'"':text;
 }).join(",")).join("\r\n")+"\r\n";}
 function colLabel(i){let s="";for(let n=i+1;n>0;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;}
 function cellCoords(ref){
