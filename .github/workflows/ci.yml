@@ -16,6 +16,8 @@ jobs:
           done
       - name: CSV export formula safety regression
         run: node --test tests/csv_formula_guard.test.cjs
+      - name: Lazy IF formula regression
+        run: node tests/sheets_lazy_if.test.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
