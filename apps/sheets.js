@@ -65,27 +65,37 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
         const n=Number(v);if(!Number.isFinite(n))throw Error("#VALUE!");
         return n;
       }
-      function factor(){
-        if(eat("+"))return number(factor());
-        if(eat("-"))return -number(factor());
-        if(eat("(")){const v=expression();expect(")");return v;}
+      function factor(active=true){
+        if(eat("+")){const v=factor(active);return active?number(v):0;}
+        if(eat("-")){const v=factor(active);return active?-number(v):0;}
+        if(eat("(")){const v=expression(active);expect(")");return v;}
         const tok=tokens[at++];if(!tok)throw Error("#PARSE!");
-        if(/^\d/.test(tok))return Number(tok);
+        if(/^\d/.test(tok))return active?Number(tok):0;
         if(/^[A-Z]+[1-9]\d*$/.test(tok)){
           const [rr,cc]=cellCoords(tok);
           if(eat(":")){
             const end=tokens[at++];
             const [r2,c2]=cellCoords(end||"");
             if(rr>r2||cc>c2||(r2-rr+1)*(c2-cc+1)>5000)throw Error("#LIMIT!");
+            if(!active)return 0;
             const values=[];
             for(let y=rr;y<=r2;y++)for(let x=cc;x<=c2;x++)values.push(calculate(rows,y,x,cache,visiting));
             return values;
           }
-          return calculate(rows,rr,cc,cache,visiting);
+          return active?calculate(rows,rr,cc,cache,visiting):0;
         }
         if(/^[A-Z_]+$/.test(tok)){
-          expect("(");const args=[];
-          if(!eat(")")){do{args.push(expression());}while(eat(","));expect(")");}
+          expect("(");
+          if(tok==="IF"){
+            const condition=expression(active);expect(",");
+            const selected=active?Boolean(number(condition)):false;
+            const yes=expression(active&&selected);expect(",");
+            const no=expression(active&&!selected);expect(")");
+            return active?(selected?yes:no):0;
+          }
+          const args=[];
+          if(!eat(")")){do{args.push(expression(active));}while(eat(","));expect(")");}
+          if(!active)return 0;
           const vals=args.flatMap(x=>Array.isArray(x)?x:[x]);
           // Spreadsheet aggregations ignore text headers/labels in ranges.
           // Propagate formula errors rather than silently hiding them.
@@ -114,14 +124,13 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
             if(tok==="SQRT"&&n<0)throw Error("#NUM!");
             return tok==="ABS"?Math.abs(n):Math.sqrt(n);
           }
-          if(tok==="IF"){if(args.length!==3)throw Error("#ARGS!");return number(args[0])?args[1]:args[2];}
           throw Error("#NAME?");
         }
         throw Error("#PARSE!");
       }
-      function power(){const v=factor();return eat("^")?Math.pow(number(v),number(power())):v;}
-      function term(){let v=power();while(peek()==="*"||peek()==="/"){const op=tokens[at++],b=number(power()),a=number(v);if(op==="/"&&b===0)throw Error("#DIV/0!");v=op==="*"?a*b:a/b;}return v;}
-      function expression(){let v=term();while(peek()==="+"||peek()==="-"){const op=tokens[at++],b=number(term()),a=number(v);v=op==="+"?a+b:a-b;}return v;}
+      function power(active=true){const v=factor(active);if(!eat("^"))return v;const rhs=power(active);return active?Math.pow(number(v),number(rhs)):0;}
+      function term(active=true){let v=power(active);while(peek()==="*"||peek()==="/"){const op=tokens[at++],rhs=power(active);if(!active)continue;const b=number(rhs),a=number(v);if(op==="/"&&b===0)throw Error("#DIV/0!");v=op==="*"?a*b:a/b;}return v;}
+      function expression(active=true){let v=term(active);while(peek()==="+"||peek()==="-"){const op=tokens[at++],rhs=term(active);if(!active)continue;const b=number(rhs),a=number(v);v=op==="+"?a+b:a-b;}return v;}
       result=expression();if(at!==tokens.length)throw Error("#PARSE!");
       if(Array.isArray(result))throw Error("#VALUE!");
       if(typeof result==="number"&&!Number.isFinite(result))throw Error("#NUM!");
