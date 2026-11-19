@@ -47,7 +47,7 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
     let result=raw;
     if(raw.startsWith("=")){
       const source=raw.slice(1).toUpperCase();
-      const tokens=[];const re=/\s*([A-Z]+[1-9]\d*|\d+(?:\.\d+)?|[A-Z_]+|[()+\-*/^,:])\s*/gy;
+      const tokens=[];const re=/\s*([A-Z]+[1-9]\d*|\d+(?:\.\d+)?|[A-Z_]+|(?:<=|>=|<>|!=|[=<>()+\-*/^,:]))\s*/gy;
       let pos=0;while(pos<source.length){
         re.lastIndex=pos;const m=re.exec(source);
         if(!m)throw Error("#PARSE!");
@@ -68,7 +68,7 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
       function factor(active=true){
         if(eat("+")){const v=factor(active);return active?number(v):0;}
         if(eat("-")){const v=factor(active);return active?-number(v):0;}
-        if(eat("(")){const v=expression(active);expect(")");return v;}
+        if(eat("(")){const v=comparison(active);expect(")");return v;}
         const tok=tokens[at++];if(!tok)throw Error("#PARSE!");
         if(/^\d/.test(tok))return active?Number(tok):0;
         if(/^[A-Z]+[1-9]\d*$/.test(tok)){
@@ -87,14 +87,14 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
         if(/^[A-Z_]+$/.test(tok)){
           expect("(");
           if(tok==="IF"){
-            const condition=expression(active);expect(",");
+            const condition=comparison(active);expect(",");
             const selected=active?Boolean(number(condition)):false;
-            const yes=expression(active&&selected);expect(",");
-            const no=expression(active&&!selected);expect(")");
+            const yes=comparison(active&&selected);expect(",");
+            const no=comparison(active&&!selected);expect(")");
             return active?(selected?yes:no):0;
           }
           const args=[];
-          if(!eat(")")){do{args.push(expression(active));}while(eat(","));expect(")");}
+          if(!eat(")")){do{args.push(comparison(active));}while(eat(","));expect(")");}
           if(!active)return 0;
           const vals=args.flatMap(x=>Array.isArray(x)?x:[x]);
           // Spreadsheet aggregations ignore text headers/labels in ranges.
@@ -131,7 +131,17 @@ function calculate(rows,r,c,cache=new Map(),visiting=new Set()){
       function power(active=true){const v=factor(active);if(!eat("^"))return v;const rhs=power(active);return active?Math.pow(number(v),number(rhs)):0;}
       function term(active=true){let v=power(active);while(peek()==="*"||peek()==="/"){const op=tokens[at++],rhs=power(active);if(!active)continue;const b=number(rhs),a=number(v);if(op==="/"&&b===0)throw Error("#DIV/0!");v=op==="*"?a*b:a/b;}return v;}
       function expression(active=true){let v=term(active);while(peek()==="+"||peek()==="-"){const op=tokens[at++],rhs=term(active);if(!active)continue;const b=number(rhs),a=number(v);v=op==="+"?a+b:a-b;}return v;}
-      result=expression();if(at!==tokens.length)throw Error("#PARSE!");
+      function comparison(active=true){
+        let v=expression(active);
+        if(["=","<>","!=","<",">","<=",">="].includes(peek())){
+          const op=tokens[at++],rhs=expression(active);
+          if(!active)return 0;
+          const a=number(v),b=number(rhs);
+          v=Number(op==="="?a===b:op==="<>"||op==="!="?a!==b:op==="<"?a<b:op===">"?a>b:op==="<="?a<=b:a>=b);
+        }
+        return v;
+      }
+      result=comparison();if(at!==tokens.length)throw Error("#PARSE!");
       if(Array.isArray(result))throw Error("#VALUE!");
       if(typeof result==="number"&&!Number.isFinite(result))throw Error("#NUM!");
     }
