@@ -6,6 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'styles.css'
+      - 'ecosystem-nav.css'
       - 'shell.js'
       - 'apps/**'
       - 'assets/**'
@@ -37,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p _site
-          cp index.html styles.css shell.js _site/
+          cp index.html styles.css ecosystem-nav.css shell.js _site/
           cp -R apps assets lib _site/
           touch _site/.nojekyll
           for app in writer sheets slides media mail; do
@@ -48,10 +49,13 @@ jobs:
           node --check _site/lib/office-export.js
           test -s _site/assets/ez-office.svg
           test -s _site/index.html
+          test -s _site/ecosystem-nav.css
           echo "EZ_OFFICE_SITE_ASSETS_PASS"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload static application
         uses: actions/upload-pages-artifact@v4
